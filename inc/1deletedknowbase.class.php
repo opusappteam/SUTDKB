@@ -40,7 +40,7 @@ if (!defined('GLPI_ROOT')) {
  *
  * @since version 0.84
 **/
-class Knowbase extends CommonGLPI {
+class deletedKnowbase extends CommonGLPI {
 
 
    static function getTypeName($nb=0) {
@@ -63,20 +63,13 @@ class Knowbase extends CommonGLPI {
    function getTabNameForItem(CommonGLPI $item, $withtemplate=0) {
 
       if ($item->getType() == __CLASS__) {
-         $tabs[1] = _x('button', 'Dash Board');
-		 $tabs[2] = _x('button', 'Search');
-         $tabs[3] = _x('button', 'Browse');
+         $tabs[1] = _x('button', 'KB Deleted Articles');
+        // $tabs[2] = _x('button', 'Browse');
          if (KnowbaseItem::canUpdate()) {
-            $tabs[4] = _x('button', 'Manage');
+           // $tabs[3] = _x('button', 'Manage');
          }
-         
-		  //4 for super user and 7 for supervisor
-		 if ($_SESSION["glpiactiveprofile"]['id']==4||$_SESSION["glpiactiveprofile"]['id']==7)
-		     $tabs[5] = _x('button', 'Deleted Article');
-       
-    
 
-	   return $tabs;
+         return $tabs;
       }
       return '';
    }
@@ -86,44 +79,21 @@ class Knowbase extends CommonGLPI {
 
       if ($item->getType() == __CLASS__) {
          switch ($tabnum) {
-            case 1 : 
-               $item->showDashBoard();
-               break;
-			case 2 : 
+            case 1 : // all
                $item->showSearchView();
                break;
 
-            case 3 :
-               $item->showBrowseView();
+            case 2 :
+              // $item->showBrowseView();
                break;
 
-            case 4 :
-               $item->showManageView();
-               break;
-			   
-			    case 5 :
-               $item->showDelView();
+            case 3 :
+             //  $item->showManageView();
                break;
          }
       }
       return true;
    }
-static function showDelView() {
- KnowbaseItem::Article_deleted_view($_GET["DelSortorder"]);
-
-}
-
-static function showDashBoard() {
-	
-  KnowbaseItem::showRecent($_GET["RSortorder"]);
-  echo("<br>");
-  KnowbaseItem::showlastupdate($_GET["LUPSortorder"]);
-   echo("<br>");
-    KnowbaseItem::showPopular($_GET["POPSortorder"]);
-	 echo("<br>");
-
-}
-
 
 
    /**
@@ -148,21 +118,31 @@ static function showDashBoard() {
       } else if (isset($_SESSION['kbcontains'])) {
          $_GET['contains'] = $_SESSION["kbcontains"];
       }
-      $ki = new KnowbaseItem();
-      $ki->searchForm($_GET);
+     // $ki = new KnowbaseItem();
+      //$ki->searchForm($_GET);
 
-        if (!isset($_GET['contains']) || empty($_GET['contains'])) {
+      if (!isset($_GET['contains']) || empty($_GET['contains'])) {
+        /*  echo "<div><table class='center-h' width='950px'><tr class='noHover'><td class='center top'>";
+         KnowbaseItem::showRecentPopular("recent");
+         echo "</td><td class='center top'>";
+         KnowbaseItem::showRecentPopular("lastupdate");
+         echo "</td><td class='center top'>";
+         KnowbaseItem::showRecentPopular("popular"); */
+		 
+		 /*  echo "</td><td class='center top'>";
+         KnowbaseItem::showKBDeleted("Deleted"); */
+		 
+		   echo "</td><td class='center top'>";
+         KnowbaseItem::Article_deleted_view("Deleted");
 		
-		echo "<script type='text/javascript'>alert('Please enter search string');</script>";
-		
-		}
-		else
-		{
-		 KnowbaseItem::showList($_GET, 'search');
-		}
-	  
-        
+         echo "</td></tr>";
+         echo "</table></div>";
       
+	  
+	  
+	  } else {
+         //KnowbaseItem::showList($_GET, 'search');
+      }
    }
 
 

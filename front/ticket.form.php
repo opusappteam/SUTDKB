@@ -1,3 +1,14 @@
+<link rel="stylesheet" type="text/css" href="../Customfields/css/bootstrap-datetimepicker.min.css"/>
+<script src="../Customfields/js/bootstrap-datetimepicker.min.js"></script>
+
+<script language="javascript" type="text/javascript" src="../Customfields/css/datetimepicker.js">
+
+//Date Time Picker script- by TengYong Ng of http://www.rainforestnet.com
+//Script featured on JavaScript Kit (http://www.javascriptkit.com)
+//For this script, visit http://www.javascriptkit.com 
+
+</script>
+
 <?php
 /*
  * @version $Id: ticket.form.php 23099 2014-07-23 15:33:22Z moyo $
@@ -195,17 +206,76 @@ if ($_SESSION["glpiactiveprofile"]["interface"] == "helpdesk") {
    Html::footer();
 }
 ?>
+<script>
+function validateForm() {
+    
+	var current_value = $('input:hidden[name=requesttypes_id]').val();
+	var x = document.forms["form_ticket"]["datetimepicker"].value;
+	var status_value=$('select[name="status"] option:selected').val();
+	var e = document.getElementById("PendingReason");
+    var strUser = e.options[e.selectedIndex].value;
+    var strUser1 = e.options[e.selectedIndex].text;
+	
+	if (status_value==4)
+	{
+		 if(strUser==0)
+		 {
+			  alert("Please select the pending Reason if the ticket is pending!!");
+			   return false;
+		 }
+	}
+	
+	if (current_value==2)
+	{
+		
+		
+      
+
+
+   	  if (x == null || x == "") {
+        alert("Please Fill-in Email Date time for Request source Email!! ");
+        return false;
+        }
+		
+		
+		
+	
+	
+	
+	}
+	
+	
+	
+	
+	
 
 
 
-<script language="javascript" type="text/javascript" src="../Customfields/css/datetimepicker.js">
 
-//Date Time Picker script- by TengYong Ng of http://www.rainforestnet.com
-//Script featured on JavaScript Kit (http://www.javascriptkit.com)
-//For this script, visit http://www.javascriptkit.com 
+//alert ($('select[name="status"] option:selected').val());
+//alert(status_value);
+
+
+
+
+
+
+
+
+//alert(document.formName.elements['requesttypes_id'].value);
+
+
+	//alert(current_value);
+	
+	
+	
+	
+	}
+
+
+
 
 </script>
-<script language="javascript" type="text/javascript" src="../Customfields/js/custom.js"> </script>
 
 
 

@@ -331,13 +331,13 @@ class Document_Item extends CommonDBRelation{
          echo "</div>";
       }
 
-      echo "<div class='spaced'>";
+      echo "<div class='spaced' >";
       if ($canedit && $number) {
          Html::openMassiveActionsForm('mass'.__CLASS__.$rand);
          $massiveactionparams = array('container' => 'mass'.__CLASS__.$rand);
          Html::showMassiveActions($massiveactionparams);
       }
-      echo "<table class='tab_cadre_fixehov'>";
+      echo "<table class='tab_cadre_fixehov' >";
 
       $header_begin  = "<tr>";
       $header_top    = '';
@@ -654,12 +654,53 @@ class Document_Item extends CommonDBRelation{
          if ($item->getType() == 'Document') {
             $used[$ID] = $ID;
          }
+		 
+		 
+		 ///akk
+				$hide_published_documents="";
+				
+			if ($item->getType() == 'KnowbaseItem')
+			{
+				$query="Select * from glpi_entities_knowbaseitems where knowbaseitems_id=". $item->getID();
 
-         echo "<div class='firstbloc'>";
-         echo "<form name='documentitem_form$rand' id='documentitem_form$rand' method='post'
+			if ($result = $DB->query($query)) {
+				
+				if ($DB->numrows($result)) {
+		                 $hide_published_documents="style='display:none'";
+		                    }
+							else
+							{
+							$hide_published_documents="";	
+								
+							}
+			}
+				
+			}
+			
+			
+			if(!($hide_published_documents==""))
+				echo("<font size='3' color='red'>Cannot ADD Document to published articles.</font>");
+			
+			
+			//akk
+
+        
+
+
+
+
+
+   		echo "<div class='firstbloc' >";
+         echo "<form name='documentitem_form$rand'  id='documentitem_form$rand' method='post'
                 action='".Toolbox::getItemTypeFormURL('Document')."' enctype=\"multipart/form-data\">";
 
-         echo "<table class='tab_cadre_fixe'>";
+				
+		
+				
+				
+				
+				
+         echo "<table class='tab_cadre_fixe' $hide_published_documents>";
          echo "<tr class='tab_bg_2'><th colspan='5'>".__('Add a document')."</th></tr>";
          echo "<tr class='tab_bg_1'>";
 
@@ -689,9 +730,22 @@ class Document_Item extends CommonDBRelation{
 
          if (Document::canView()
              && ($nb > count($used))) {
-            echo "<form name='document_form$rand' id='document_form$rand' method='post'
+            echo "<form  name='document_form$rand' id='document_form$rand' method='post'
                    action='".Toolbox::getItemTypeFormURL(__CLASS__)."'>";
-            echo "<table class='tab_cadre_fixe'>";
+            
+			
+			//akk hide linked document in KB
+			$hide_Linked_document="";
+			
+			if ($item->getType() == 'KnowbaseItem')
+			  $hide_Linked_document="style='display:none'";
+			
+			
+		
+
+
+
+		echo "<table $hide_Linked_document class='tab_cadre_fixe'>";
             echo "<tr class='tab_bg_1'>";
             echo "<td colspan='4' class='center'>";
             echo "<input type='hidden' name='itemtype' value='".$item->getType()."'>";
@@ -716,7 +770,7 @@ class Document_Item extends CommonDBRelation{
          echo "</div>";
       }
 
-      echo "<div class='spaced'>";
+      echo "<div class='spaced' >";
       if ($canedit
           && $number
           && ($withtemplate < 2)) {
@@ -726,26 +780,33 @@ class Document_Item extends CommonDBRelation{
          Html::showMassiveActions($massiveactionparams);
       }
 
-      $sort_img = "<img src=\"" . $CFG_GLPI["root_doc"] . "/pics/" .
-                    (($order == "DESC") ? "puce-down.png" : "puce-up.png") ."\" alt='' title=''>";
+	  
+	
+		 
+		   $sort_img = "<img  src=\"" . $CFG_GLPI["root_doc"] . "/pics/" .
+                    (($order == "DESC") ? "puce-down.png" : "puce-up.png") ."\" alt='' title='' >";
+		  
+		  
+	  
+     
 
-      echo "<table class='tab_cadre_fixehov'>";
+      echo "<table class='tab_cadre_fixehov' >";
 
-      $header_begin  = "<tr>";
+      $header_begin  = "<tr  >";
       $header_top    = '';
       $header_bottom = '';
       $header_end    = '';
       if ($canedit
           && $number
           && ($withtemplate < 2)) {
-         $header_top    .= "<th width='11'>".Html::getCheckAllAsCheckbox('mass'.__CLASS__.$rand);
+         $header_top    .= "<th $hide_published_documents width='11'>".Html::getCheckAllAsCheckbox('mass'.__CLASS__.$rand);
          $header_top    .= "</th>";
-         $header_bottom .= "<th width='11'>".Html::getCheckAllAsCheckbox('mass'.__CLASS__.$rand);
+         $header_bottom .= "<th $hide_published_documents  width='11'>".Html::getCheckAllAsCheckbox('mass'.__CLASS__.$rand);
          $header_bottom .= "</th>";
       }
 
       foreach ($columns as $key => $val) {
-         $header_end .= "<th>".(($sort == "`$key`") ?$sort_img:"").
+         $header_end .= "<th >".(($sort == "`$key`") ?$sort_img:"").
                         "<a href='javascript:reloadTab(\"sort=$key&amp;order=".
                           (($order == "ASC") ?"DESC":"ASC")."&amp;start=0\");'>$val</a></th>";
       }
@@ -782,22 +843,37 @@ class Document_Item extends CommonDBRelation{
             }
             $used[$docID] = $docID;
             $assocID      = $data["assocID"];
+			
+			
+				
+			
+			
 
             echo "<tr class='tab_bg_1".($data["is_deleted"]?"_2":"")."'>";
             if ($canedit
                 && ($withtemplate < 2)) {
-               echo "<td width='10'>";
+               echo "<td $hide_published_documents width='10' >";
                Html::showMassiveActionCheckBox(__CLASS__, $data["assocID"]);
                echo "</td>";
             }
-            echo "<td class='center'>$link</td>";
-            echo "<td class='center'>".$data['entity']."</td>";
+           
+		   
+		   if(($hide_published_documents==""))
+			    echo "<td class='center'>$link</td>";
+            else
+				 echo "<td class='center'> Document Published </td>";
+
+		  echo "<td class='center'>".$data['entity']."</td>";
             echo "<td class='center'>$downloadlink</td>";
             echo "<td class='center'>";
             if (!empty($data["link"])) {
+				
+				
                echo "<a target=_blank href='".formatOutputWebLink($data["link"])."'>".$data["link"];
                echo "</a>";
-            } else {;
+            
+			
+			} else {;
                echo "&nbsp;";
             }
             echo "</td>";
@@ -821,8 +897,11 @@ class Document_Item extends CommonDBRelation{
       echo "</table>";
       if ($canedit && $number && ($withtemplate < 2)) {
          $massiveactionparams['ontop'] = false;
-         Html::showMassiveActions($massiveactionparams);
-         Html::closeForm();
+       
+         
+		
+		 //Html::showMassiveActions($massiveactionparams);
+		 Html::closeForm();
       }
       echo "</div>";
    }

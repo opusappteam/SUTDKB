@@ -2160,8 +2160,10 @@ class CommonDBTM extends CommonGLPI {
       }
 
       if ($this->canEdit($ID)) {
-         echo "<form name='form' method='post' action='".$params['target']."' ".
+         echo "<form name='form'  method='post' action='".$params['target']."' ".
                 $params['formoptions'].">";
+				
+				//echo($params['target']);
 
          //Should add an hidden entities_id field ?
          //If the table has an entities_id field
@@ -2314,6 +2316,22 @@ class CommonDBTM extends CommonGLPI {
    function can($ID, $right, array &$input=NULL) {
       // Clean ID :
       $ID = Toolbox::cleanInteger($ID);
+      global $DB;
+	  
+	  
+	  //akk
+	  
+	/*   $query_check_publish="Select * from glpi_entities_knowbaseitems";
+	  
+	  if ($result = $DB->query($query_check_publish)) {
+         if ($DB->numrows($result)) {
+		 
+		  //return (static::canView() && $this->canViewItem());
+		 }
+		 
+		 } */
+//akk
+
 
       // Create process
       if ($this->isNewID($ID)) {
@@ -2321,6 +2339,9 @@ class CommonDBTM extends CommonGLPI {
             // Only once
             $this->getEmpty();
          }
+		 
+		 
+		 
 
          if (is_array($input)) {
             $input = $this->addNeededInfoToInput($input);

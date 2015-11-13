@@ -481,7 +481,7 @@ class TicketFollowup  extends CommonDBTM {
       RequestType::dropdown(array('value' => RequestType::getDefault('helpdesk')));
 
       echo "<br>".__('Description')." ";
-      echo "<textarea name='content' cols='50' rows='6'></textarea>&nbsp;";
+      echo "<textarea name='content' id='content' cols='50' rows='6'></textarea>&nbsp;";
 
       echo "<input type='hidden' name='is_private' value='".$_SESSION['glpifollowup_private']."'>";
       echo "<input type='submit' name='add' value=\""._sx('button', 'Add')."\" class='submit'>";
@@ -580,25 +580,22 @@ class TicketFollowup  extends CommonDBTM {
       if ($tech) {
          $this->showFormHeader($options);
 
-         echo "<tr class='tab_bg_1'>";
-         echo "<td rowspan='3' class='middle right'>".__('Description')."</td>";
-         /// old code :echo "<td class='center middle' rowspan='3'>";
-         
 		 
-		 // old code : echo "<textarea name='content' cols='70' rows='6'>".$this->fields["content"]."</textarea>";
-         
-		 
-         //akk modified
+		 //akk 
 		 
 		  $row_length= substr_count($this->fields["content"], "\n");
 		  $row_length_addl=$row_length+8;
 		 //akk
         
-		
+		echo "<tr class='tab_bg_1'>";
+         echo "<td rowspan='3' class='middle right'>".__('Description')."</td>";
          echo "<td class='center middle' rowspan='3'>";
          echo "<textarea id ='content' name='content' cols='70' rows='". $row_length_addl ."'>".$this->fields["content"]."</textarea>";
         //akk
-		 
+		
+		// echo "<table id ='content' name='content' >".$this->fields["content"]."</table>";
+		
+		 echo($row_length); 
 		 
 		 if ($this->fields["date"]) {
             echo "</td><td>".__('Date')."</td>";
@@ -632,25 +629,17 @@ class TicketFollowup  extends CommonDBTM {
 
          $this->showFormHeader($options);
 
-         echo "<tr class='tab_bg_1'>";
-         echo "<td class='middle right'>".__('Description')."</td>";
-         echo "<td class='center middle'>";
-         // old Code : echo "<textarea name='content' cols='80' rows='6'>".$this->fields["content"]."</textarea>";
-        
-
-          
-         //akk modified
+		  //akk 
 		 
 		  $row_length= substr_count($this->fields["content"], "\n");
 		  $row_length_addl=$row_length+8;
 		 //akk
-        
-		
-        
-         echo "<textarea id ='content' name='content' cols='70' rows='". $row_length_addl ."'>".$this->fields["content"]."</textarea>";
-        //akk
-
-		echo "<input type='hidden' name='tickets_id' value='".$this->fields["tickets_id"]."'>";
+		 
+         echo "<tr class='tab_bg_1'>";
+         echo "<td class='middle right'>".__('Description')."</td>";
+         echo "<td class='center middle'>";
+         echo "<textarea name='content' cols='80' rows='". $row_length_addl ."'>".$this->fields["content"]."</textarea>";
+         echo "<input type='hidden' name='tickets_id' value='".$this->fields["tickets_id"]."'>";
          echo "<input type='hidden' name='requesttypes_id' value='".
                 RequestType::getDefault('helpdesk')."'>";
          // Reopen case

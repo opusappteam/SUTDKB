@@ -114,7 +114,10 @@ class Session {
                $_SESSION["glpiroot"]            = $CFG_GLPI["root_doc"];
                $_SESSION["glpi_use_mode"]       = $auth->user->fields['use_mode'];
                $_SESSION["glpicrontimer"]       = time();
-               // Default tab
+             
+			
+
+			 // Default tab
 //               $_SESSION['glpi_tab']=1;
                $_SESSION['glpi_tabs']           = array();
                $auth->user->computePreferences();

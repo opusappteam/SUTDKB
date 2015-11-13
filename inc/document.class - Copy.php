@@ -936,14 +936,7 @@ class Document extends CommonDBTM {
       $input['filepath'] = $new_path;
       // Checksum
       $input['sha1sum']  = $sha1sum;
-      
-	 
-	  
-	  return true;
-   
-   
-   
-   
+      return true;
    }
 
    /**

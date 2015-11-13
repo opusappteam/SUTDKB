@@ -48,14 +48,13 @@ if (isset($_GET['docid'])) { // docid for document
       Html::displayErrorAndDie(__('File not found'), true); // Not found
 
    } else if ($doc->canViewFile($_GET)) {
-      /* if ($doc->fields['sha1sum']
+      if ($doc->fields['sha1sum']
           && $doc->fields['sha1sum'] != sha1_file(GLPI_DOC_DIR."/".$doc->fields['filepath'])) {
 
          Html::displayErrorAndDie(__('File is altered (bad checksum)'), true); // Doc alterated
       } else {
          $doc->send();
-      } */
-	   $doc->send();
+      }
    } else {
       Html::displayErrorAndDie(__('Unauthorized access to this file'), true); // No right
    }

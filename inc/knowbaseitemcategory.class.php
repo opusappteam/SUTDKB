@@ -145,14 +145,28 @@ class KnowbaseItemCategory extends CommonTreeDropdown {
          }
          $faq_limit = getEntitiesRestrictRequest("AND", "glpi_knowbaseitemcategories", "entities_id",
                                                  $_SESSION['glpiactiveentities'], true);
-
+/* 
          $query = "SELECT *
-                   FROM `glpi_knowbaseitemcategories`
-                   WHERE `glpi_knowbaseitemcategories`.`knowbaseitemcategories_id`
+                   FROM glpi_knowbaseitemcategories 
+                   WHERE knowbaseitemcategories_id
                               = '".$params["knowbaseitemcategories_id"]."'
                          $faq_limit
-                   ORDER BY `name` ASC";
+                   ORDER BY `name` ASC"; */
+				   
+				   
+				   //akk Category No
+				   
+				    $query = "SELECT g.*,g.id,G.completename ,(count(*)) as NoofArticles
+                   FROM glpi_knowbaseitemcategories as G  left outer join glpi_knowbaseitems as K  on G.id=K.knowbaseitemcategories_id 
+                   WHERE  K.id in (Select knowbaseitems_id from glpi_entities_knowbaseitems where entities_id =0) and
+				  
+				   G.knowbaseitemcategories_id
+                              = '".$params["knowbaseitemcategories_id"]."'
+                      group by g.id, G.completename  
+                   ORDER BY G.name ASC";
       }
+	  
+	  //echo($query);
 
       // Show category
       if ($result = $DB->query($query)) {
@@ -187,7 +201,8 @@ class KnowbaseItemCategory extends CommonTreeDropdown {
 
          if ($DB->numrows($result) > 0) {
             $i = 0;
-            while ($row=$DB->fetch_assoc($result)) {
+            
+			while ($row=$DB->fetch_assoc($result)) {
                // on affiche les résultats sur trois colonnes
                if (($i%3) == 0) {
                   echo "<tr>";
@@ -195,10 +210,18 @@ class KnowbaseItemCategory extends CommonTreeDropdown {
                $ID = $row["id"];
                echo "<td class='tdkb_result'>";
                echo "<img alt='' src='".$CFG_GLPI["root_doc"]."/pics/folder.png' hspace='5'>";
-               echo "<span class='b'>".
+              //akk
+
+			 /* echo "<span class='b'>".
                     "<a href='".$params['target']."?knowbaseitemcategories_id=".$row["id"]."$parameters'>".
-                      $row["name"]."</a></span>";
+                      $row["name"]. " </a></span>"; */
+
+
+			  echo "<span class='b'>".
+                    "<a href='".$params['target']."?knowbaseitemcategories_id=".$row["id"]."$parameters'>".
+                      $row["name"]. "(".$row["NoofArticles"] .") </a></span>";
                echo "<div class='kb_resume'>".Html::resume_text($row['comment'],60)."</div>";
+			   
 
                if (($i%3) == 2) {
                   echo "</tr>";

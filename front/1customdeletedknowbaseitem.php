@@ -1,21 +1,6 @@
-<script>
-$( document ).ready(function() {
-    $('#PendingReason').change(function(){
-       if($(this).val() == "E-mail")
-       {
-           alert("hiiiii");
-           //show InPatient 
-       }
-    })
-});
-</script>
-
-
-
 <?php
-
 /*
- * @version $Id: ticket.php 22656 2014-02-12 16:15:25Z moyo $
+ * @version $Id: knowbaseitem.php 23080 2014-07-17 08:40:03Z moyo $
  -------------------------------------------------------------------------
  GLPI - Gestionnaire Libre de Parc Informatique
  Copyright (C) 2003-2014 by the INDEPNET Development Team.
@@ -48,27 +33,42 @@ $( document ).ready(function() {
 
 include ('../inc/includes.php');
 
-Session::checkLoginUser();
-
-if ($_SESSION["glpiactiveprofile"]["interface"] == "helpdesk") {
-   Html::helpHeader(Ticket::getTypeName(2),'',$_SESSION["glpiname"]);
-} else {
-   Html::header(Ticket::getTypeName(2),'',"helpdesk","ticket");
+if (!Session::haveRightsOr('knowbase', array(READ, KnowbaseItem::READFAQ))) {
+   Session::redirectIfNotLoggedIn();
+   Html::displayRightError();
 }
 
-if ($_SESSION['glpirefresh_ticket_list'] > 0) {
-   // Refresh automatique  sur tracking.php
-   echo "<script type=\"text/javascript\">\n";
-   echo "setInterval(\"window.location.reload()\",".
-         (60000 * $_SESSION['glpirefresh_ticket_list']).");\n";
-   echo "</script>\n";
+/* if (isset($_GET["id"])) {
+   Html::redirect($CFG_GLPI["root_doc"]."front/deletedknowbaseitem.form.php?id=".$_GET["id"]);
+} */
+
+Html::header(KnowbaseItem::getTypeName(1), $_SERVER['PHP_SELF'], "tools", "knowbaseitem");
+
+
+// Clean for search
+$_GET = Toolbox::stripslashes_deep($_GET);
+
+// Search a solution
+if (!isset($_GET["contains"])
+    && isset($_GET["item_itemtype"])
+    && isset($_GET["item_items_id"])) {
+
+   if ($item = getItemForItemtype($_GET["item_itemtype"])) {
+      if ($item->getFromDB($_GET["item_items_id"])) {
+         $_GET["contains"] = $item->getField('name');
+      }
+   }
 }
 
-Search::show('Ticket');
-
-if ($_SESSION["glpiactiveprofile"]["interface"] == "helpdesk") {
-   Html::helpFooter();
-} else {
-   Html::footer();
+// Manage forcetab : non standard system (file name <> class name)
+if (isset($_GET['forcetab'])) {
+   Session::setActiveTab('Knowbase', $_GET['forcetab']);
+   unset($_GET['forcetab']);
 }
+
+$kb = new deletedKnowbase();
+$kb->display($_GET);
+
+
+Html::footer();
 ?>

@@ -1,4 +1,15 @@
+<style>
+.select2-chosen {
+   
+    display: hidden;
+   
+}
+</style>
+
+
+
 <?php
+
 /*
  * @version $Id: knowbaseitem.form.php 22656 2014-02-12 16:15:25Z moyo $
  -------------------------------------------------------------------------
@@ -32,7 +43,7 @@
 */
 
 include ('../inc/includes.php');
-
+//session_start();
 if (!isset($_GET["id"])) {
    $_GET["id"] = "";
 }
@@ -47,38 +58,89 @@ if (!isset($_GET["modify"])) {
 }
 
 
+
+
+
+
+
 $kb = new KnowbaseItem();
 
-if (isset($_POST["add"])) {
-   // ajoute un item dans la base de connaisssances
-   $kb->check(-1, CREATE,$_POST);
-   $newID = $kb->add($_POST);
-   Event::log($newID, "knowbaseitem", 5, "tools",
-              sprintf(__('%1$s adds the item %2$s'), $_SESSION["glpiname"], $newID));
-   if (isset($_POST['_in_modal']) && $_POST['_in_modal']) {
-      Html::redirect($CFG_GLPI["root_doc"]."/front/knowbaseitem.form.php?id=$newID&_in_modal=1");
-   } else {
-      Html::redirect($CFG_GLPI["root_doc"]."/front/knowbaseitem.php");
-   }
+if (isset($_POST["add"])) 
+{
+    //akk update valid
+	
+	
+	
 
-} else if (isset($_POST["update"])) {
+       // ajoute un item dans la base de connaisssances
+       
+	 	
+	   $kb->check(-1, CREATE,$_POST);
+       $newID = $kb->add($_POST);
+       Event::log($newID, "knowbaseitem", 5, "tools",
+              sprintf(__('%1$s adds the item %2$s'), $_SESSION["glpiname"], $newID));
+			  
+			   if (isset($_POST['_in_modal']) && $_POST['_in_modal']) {
+         Html::redirect($CFG_GLPI["root_doc"]."/front/knowbaseitem.form.php?id=$newID&_in_modal=1");
+       } else {
+       Html::redirect($CFG_GLPI["root_doc"]."/front/knowbaseitem.php");
+       }
+  
+   
+   
+   } 
+
+
+
+else if (isset($_POST["update"])) {
    // actualiser  un item dans la base de connaissances
+   
+   
    $kb->check($_POST["id"], UPDATE);
 
    $kb->update($_POST);
+   
+    
+   
+   
    Event::log($_POST["id"], "knowbaseitem", 5, "tools",
               //TRANS: %s is the user login
               sprintf(__('%s updates an item'), $_SESSION["glpiname"]));
    Html::redirect($CFG_GLPI["root_doc"]."/front/knowbaseitem.form.php?id=".$_POST['id']);
 
-} else if (isset($_POST["purge"])) {
+} 
+
+
+else if (isset($_POST["purge"])) {
    // effacer un item dans la base de connaissances
+   
+      //akk delete
+   /* if ($_SESSION["glpiactiveprofile"]['id']==4||$_SESSION["glpiactiveprofile"]['id']==7)
+   { */
+   
    $kb->check($_POST["id"], PURGE);
-   $kb->delete($_POST, 1);
+    $kb->delete($_POST, 1);
+   
+  
+  $kii_delete = new KnowbaseItem();
+       $kii_delete ->updateDeleted($_POST["id"]);
+   
+   //akk
+   
    Event::log($_POST["id"], "knowbaseitem", 5, "tools",
               //TRANS: %s is the user login
               sprintf(__('%s purges an item'), $_SESSION["glpiname"]));
+    /*}
+   else
+   {
+	   echo "<script type='text/javascript'>alert('Your profile does have permission to delete');</script>";
+   } */  //akk delete
+   
+   
    $kb->redirectToList();
+   
+   
+   
 
 } else if (isset($_POST["addvisibility"])) {
    if (isset($_POST["_type"]) && !empty($_POST["_type"])
@@ -126,6 +188,7 @@ if (isset($_POST["add"])) {
          $kb->showFull();
       } else { // New item
          $kb->showForm($_GET["id"], $_GET);
+		
       }
       Html::popFooter();
    } else {
@@ -155,8 +218,8 @@ if (isset($_POST["add"])) {
             $options[$key] = $_GET[$key];
          }
       }
+     // $kb->display($options);
       $kb->display($options);
-
       if (Session::getLoginUserID()) {
          if ($_SESSION["glpiactiveprofile"]["interface"] == "central") {
             Html::footer();
@@ -168,4 +231,6 @@ if (isset($_POST["add"])) {
       }
    }
 }
+
+
 ?>

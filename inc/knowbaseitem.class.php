@@ -51,7 +51,7 @@ class KnowbaseItem extends CommonDBTM {
    const PUBLISHFAQ    = 4096;
 
    static $rightname   = 'knowbase';
-
+   
 
    static function getTypeName($nb=0) {
       return __('Knowledge base');
@@ -157,31 +157,84 @@ class KnowbaseItem extends CommonDBTM {
    function defineTabs($options=array()) {
 
       $ong = array();
-      $this->addStandardTab(__CLASS__, $ong, $options);
-      $this->addStandardTab('Document_Item', $ong, $options);
+   
+    
 
-      $this->addStandardTab('KnowbaseItemTranslation',$ong, $options);
-
+     
+    $this->addStandardTab(__CLASS__, $ong, $options);
+	  $this->addStandardTab('KnowbaseItemTranslation',$ong, $options);
+	$this->addStandardTab('Document_Item', $ong, $options);
+    
       return $ong;
    }
 
 
    function getTabNameForItem(CommonGLPI $item, $withtemplate=0) {
-
+global $DB;
       if (!$withtemplate) {
          switch ($item->getType()) {
             case __CLASS__ :
                $ong[1] = $this->getTypeName(1);
                if ($item->canUpdateItem()) {
-                  if ($_SESSION['glpishow_count_on_tabs']) {
+                  
+                 
+				 //akk
+				 
+				 
+				 $query="Select * from glpi_entities_knowbaseitems where knowbaseitems_id=". $item->getID();
+		 
+		 
+		 
+		 if ($result = $DB->query($query)) {
+         if ($DB->numrows($result)) {
+		 
+		 //published
+		 
+		 //4 for super user and 7 for supervisor can change target
+		 if ($_SESSION["glpiactiveprofile"]['id']==4||$_SESSION["glpiactiveprofile"]['id']==7)
+		 {
+		  if ($_SESSION['glpishow_count_on_tabs']) {
                      $nb = $item->countVisibilities();
                      $ong[2] = self::createTabEntry(_n('Target','Targets',$nb),
                                                     $nb);
                   } else {
                      $ong[2] = _n('Target','Targets',2);
                   }
-                  $ong[3] = __('Edit');
-               }
+		 
+		 }
+		 
+		 
+		 
+		 }
+		 else
+    		 {
+			 //  not published
+			 
+			 
+			 if ($_SESSION['glpishow_count_on_tabs']) {
+                     $nb = $item->countVisibilities();
+                     $ong[2] = self::createTabEntry(_n('Target','Targets',$nb),
+                                                    $nb);
+                  } else {
+                     $ong[2] = _n('Target','Targets',2);
+                  }
+
+			$ong[3] = __('Edit'); 
+			 
+		 }
+		  
+		 
+		 }
+				 
+                 
+
+				
+              
+
+
+
+
+			  }
                return $ong;
          }
       }
@@ -199,10 +252,12 @@ class KnowbaseItem extends CommonDBTM {
 
             case 2 :
                $item->showVisibility();
+			   
                break;
 
             case 3 :
                $item->showForm($item->getID());
+			   
                break;
          }
       }
@@ -644,7 +699,7 @@ class KnowbaseItem extends CommonDBTM {
       echo "</td>";
       echo "</tr>\n";
 
-      echo "<tr class='tab_bg_1'>";
+      echo "<tr class='tab_bg_1'  style='display: none;'>";  // Hide FAQ AKK
       if (Session::haveRight(self::$rightname, self::PUBLISHFAQ)) {
          echo "<td>".__('Put this item in the FAQ')."</td>";
          echo "<td>";
@@ -677,7 +732,8 @@ class KnowbaseItem extends CommonDBTM {
       echo "</td>";
       echo "</tr>\n";
 
-      echo "<tr class='tab_bg_1'>";
+      echo "<tr class='tab_bg_1' style='display: none;'>"; // Hide FAQ Date AKK
+	  
       echo "<td>".__('Visible since')."</td><td>";
       Html::showDateTimeField("begin_date", array('value'       => $this->fields["begin_date"],
                                                   'timestep'    => 1,
@@ -696,7 +752,7 @@ class KnowbaseItem extends CommonDBTM {
       echo "<tr class='tab_bg_1'>";
       echo "<td>".__('Subject')."</td>";
       echo "<td colspan='3'>";
-      echo "<textarea cols='100' rows='1' name='name'>".$this->fields["name"]."</textarea>";
+      echo "<textarea cols='100' rows='5' name='name' id='name' required>".$this->fields["name"]."</textarea>";
       echo "</td>";
       echo "</tr>\n";
 
@@ -711,14 +767,14 @@ class KnowbaseItem extends CommonDBTM {
          echo Html::hidden('_in_modal', array('value' => 1));
       }
 
-      echo "<textarea cols='$cols' rows='$rows' id='answer' name='answer'>".$this->fields["answer"];
+      echo "<textarea cols='$cols' rows='$rows' id='answer' name='answer' >".$this->fields["answer"];
       echo "</textarea>";
       echo "</td>";
       echo "</tr>\n";
 
       if ($this->isNewID($ID)) {
-         echo "<tr class='tab_bg_1'>";
-         echo "<td>"._n('Target','Targets',1)."</td>";
+         echo "<tr class='tab_bg_1' style='display: none;'>";
+         echo "<td>"._n('Target','Targets',1)."</td>";  // AKK to hide Target
          echo "<td>";
          $types   = array('Entity', 'Group', 'Profile', 'User');
          $addrand = Dropdown::showItemTypes('_visibility[_type]', $types);
@@ -755,6 +811,9 @@ class KnowbaseItem extends CommonDBTM {
       if (isset($_SESSION['glpi_faqcategories'])) {
          unset($_SESSION['glpi_faqcategories']);
       }
+   
+ // $_SESSION['Knowbaseid'] =$this->fields['id'];
+   
    }
 
    /**
@@ -771,7 +830,24 @@ class KnowbaseItem extends CommonDBTM {
                 WHERE `id` = '".$this->getID()."'";
 
       $DB->query($query);
+//recording KB ID to the session AKK 
+	 $_SESSION['Knowbaseid']=$this->getID();
    }
+    function updateDeleted($knowbaseID) {
+      global $DB;
+
+      //update for delete  AKK
+      /* $query = "UPDATE zcustom_glpi_knowbaseitems_deleted
+                SET Deleted_user_ID = '" .  $_SESSION["glpiID"] . "' where id =" . $knowbaseID . " "; */
+        $query = "UPDATE zcustom_glpi_knowbaseitems_deleted
+                SET Deleted_user_ID = '" .  $_SESSION["glpiID"] . "' where id =" . $knowbaseID . "  ";       
+
+      $DB->query($query);
+	 
+   }
+   
+   
+  
 
 
    /**
@@ -788,6 +864,8 @@ class KnowbaseItem extends CommonDBTM {
          return false;
       }
 
+	  //echo("sfd");
+	  
       $linkusers_id = true;
       // show item : question and answer
       if ($_SESSION["glpiactiveprofile"]["interface"] == "helpdesk"
@@ -836,19 +914,35 @@ class KnowbaseItem extends CommonDBTM {
             $linkusers_id = 0;
          }
 
-         printf(__('%1$s: %2$s'), __('Writer'), getUserName($this->fields["users_id"],
+		 
+		 // mod by AKK for Knowledge base Article for last update user 
+         printf(__('%1$s: %2$s'), __('Last Update by '), getUserName($this->fields["users_id"],
                 $linkusers_id));
          echo "<br>";
       }
 
-      if ($this->fields["date"]) {
-         //TRANS: %s is the datetime of update
-         printf(__('Created on %s'), Html::convDateTime($this->fields["date"]));
-         echo "<br>";
-      }
+      
       if ($this->fields["date_mod"]) {
          //TRANS: %s is the datetime of update
          printf(__('Last update on %s'), Html::convDateTime($this->fields["date_mod"]));
+		 echo "<br>";
+      }
+	  /* if ($this->fields["date"]) {
+         //TRANS: %s is the datetime of update
+         printf(__('Created on %s'), Html::convDateTime($this->fields["date"]));
+         echo "<br>";
+      } */
+	  
+	  
+	//  KBGET_created_user();
+	   //printf(__(''), $this->KBGET_created_user()." by");
+         
+		 echo $this->KBGET_created_user();
+		 echo ("<br>");
+	    if ($this->fields["date"]) {
+         //TRANS: %s is the datetime of update
+         printf(__('Created on %s'), Html::convDateTime($this->fields["date"]));
+         echo "<br>";
       }
 
       echo "</th>";
@@ -900,8 +994,15 @@ class KnowbaseItem extends CommonDBTM {
       echo "<form method='get' action='".$this->getSearchURL()."'>";
       echo "<table class='tab_cadre_fixe'>";
       echo "<tr class='tab_bg_2'><td class='right' width='50%'>";
-      echo "<input type='text' size='50' name='contains' value=\"".
+      
+	  
+	  echo "<input type='text' size='50' name='contains' value=\"".
              Html::cleanInputText(stripslashes($params["contains"]))."\"></td>";
+	
+
+
+	  
+			  //  echo "<input type='text' size='50' name='contains'></td>";
       echo "<td class='left'>";
       echo "<input type='submit' value=\""._sx('button','Search')."\" class='submit'></td></tr>";
       echo "</table>";
@@ -1065,6 +1166,7 @@ class KnowbaseItem extends CommonDBTM {
       switch ($type) {
          case 'allmy' :
             $where .= " AND `glpi_knowbaseitems`.`users_id` = '".Session::getLoginUserID()."'";
+			$order=" order by date_mod desc ";  // akk to display 
             break;
 
          case 'myunpublished' :
@@ -1072,16 +1174,25 @@ class KnowbaseItem extends CommonDBTM {
                         AND (`glpi_entities_knowbaseitems`.`entities_id` IS NULL
                               AND `glpi_knowbaseitems_profiles`.`profiles_id` IS NULL
                               AND `glpi_groups_knowbaseitems`.`groups_id` IS NULL
-                              AND `glpi_knowbaseitems_users`.`users_id` IS NULL)";
-            break;
+                              AND `glpi_knowbaseitems_users`.`users_id` IS NULL) ";
+            
+			 $order=" order by date_mod desc ";
+			
+			break;
 
          case 'allunpublished' :
             // Only published
-            $where .= " AND (`glpi_entities_knowbaseitems`.`entities_id` IS NULL
+           /*  $where .= " AND (`glpi_entities_knowbaseitems`.`entities_id` IS NULL
                               AND `glpi_knowbaseitems_profiles`.`profiles_id` IS NULL
                               AND `glpi_groups_knowbaseitems`.`groups_id` IS NULL
-                              AND `glpi_knowbaseitems_users`.`users_id` IS NULL)";
-            break;
+                              AND `glpi_knowbaseitems_users`.`users_id` IS NULL) "; */
+							  
+							  $where .= " AND `glpi_knowbaseitems`.`id`  not in (select `glpi_entities_knowbaseitems`.`knowbaseitems_id` from `glpi_entities_knowbaseitems` ) ";
+         
+
+             $order=" order by date_mod desc ";
+
+     		 break;
 
          case 'search' :
             if (strlen($params["contains"]) > 0) {
@@ -1112,7 +1223,11 @@ class KnowbaseItem extends CommonDBTM {
                              FROM `glpi_knowbaseitems`
                              $join
                              WHERE $where_1";
-               $result_1  = $DB->query($query_1);
+             
+
+
+
+			 $result_1  = $DB->query($query_1);
                $numrows_1 = $DB->result($result_1,0,0);
 
                if ($numrows_1 <= 0) {// not result this fulltext try with alternate search
@@ -1161,7 +1276,25 @@ class KnowbaseItem extends CommonDBTM {
                           `glpi_knowbaseitemtranslations`.`answer` AS transanswer ";
       }
 
-      $query = "SELECT DISTINCT `glpi_knowbaseitems`.*,
+      
+	  
+	  if ($type=='search')
+	  {
+		  $Check_published="inner join glpi_entities_knowbaseitems K2 on K2.knowbaseitems_id = glpi_knowbaseitems.id";
+		  $Check_published1="inner join glpi_entities_knowbaseitems K2 on K2.knowbaseitems_id = glpi_knowbaseitems.id";
+		  
+	  }
+	  else
+	  {
+		  
+		   $Check_published="";
+		    $Check_published1="";
+	  }
+  
+	  
+	  
+	  
+	  $query = "SELECT DISTINCT `glpi_knowbaseitems`.*,
                        `glpi_knowbaseitemcategories`.`completename` AS category
                        $addselect
                        $score
@@ -1170,12 +1303,48 @@ class KnowbaseItem extends CommonDBTM {
                 LEFT JOIN `glpi_knowbaseitemcategories`
                      ON (`glpi_knowbaseitemcategories`.`id`
                            = `glpi_knowbaseitems`.`knowbaseitemcategories_id`)
-                WHERE $where
-                $order";
+                $Check_published
+				
+				
+				WHERE $where
+                   ";
+				
+				
+				//adding Like query to make effective search AKK
+				
+				if ($type=='search')
+				{
+				$query =  $query . "  union SELECT DISTINCT `glpi_knowbaseitems`.*,
+                       `glpi_knowbaseitemcategories`.`completename` AS category
+                       $addselect
+                       $score
+                FROM `glpi_knowbaseitems`
+                $join
+                LEFT JOIN `glpi_knowbaseitemcategories`
+                     ON (`glpi_knowbaseitemcategories`.`id`
+                           = `glpi_knowbaseitems`.`knowbaseitemcategories_id`)
+              $Check_published1
 
-      return $query;
-   }
+			   WHERE ((glpi_knowbaseitems.name like '%$search%') or (glpi_knowbaseitems.answer like '%$search%'))  
+               ";
+				}
+		
+		
+		
+		
+		
+		$query=$query.	 $order;  
 
+      
+	  
+	  
+	  
+	  return $query;
+  
+
+  }
+
+   
 
    /**
     * Print out list kb item
@@ -1220,7 +1389,11 @@ class KnowbaseItem extends CommonDBTM {
          $params["start"] = 0;
       }
 
+	  
+	  
       $query = self::getListRequest($params, $type);
+	//echo($query );
+	  
       // Get it from database
       if ($result = $DB->query($query)) {
          $KbCategory = new KnowbaseItemCategory();
@@ -1416,12 +1589,13 @@ class KnowbaseItem extends CommonDBTM {
     *
     * @return nothing (display table)
    **/
-   static function showRecentPopular($type) {
+   
+   static function showKBDeleted($type) {
       global $DB, $CFG_GLPI;
 
-      $faq = !Session::haveRight(self::$rightname, READ);
+      //$faq = !Session::haveRight(self::$rightname, READ);
 
-      if ($type == "recent") {
+     /*  if ($type == "recent") {
          $orderby = "ORDER BY `date` DESC";
          $title   = __('Recent entries');
       } else if ($type == 'lastupdate') {
@@ -1430,7 +1604,601 @@ class KnowbaseItem extends CommonDBTM {
       } else {
          $orderby = "ORDER BY `view` DESC";
          $title   = __('Most popular questions');
+      } */
+	  
+	  $title   =('<u><a href="customdeletedknowbaseitem.php"> View Deleted Articles </a> </u> ');
+	  
+     //$title   =.($_SESSION["glpiactiveprofile"]['id']);
+	
+	
+          
+    /*   $faq_limit = "";
+      $addselect = "";
+      // Force all joins for not published to verify no visibility set
+      $join = self::addVisibilityJoins(true);
+
+      if (Session::getLoginUserID()) {
+         $faq_limit .= "WHERE ".self::addVisibilityRestrict();
+      } else {
+         // Anonymous access
+         if (Session::isMultiEntitiesMode()) {
+            $faq_limit .= " WHERE (`glpi_entities_knowbaseitems`.`entities_id` = '0'
+                                   AND `glpi_entities_knowbaseitems`.`is_recursive` = '1')";
+         } else {
+            $faq_limit .= " WHERE 1";
+         }
+      } */
+
+
+      /* // Only published
+      $faq_limit .= " AND (`glpi_entities_knowbaseitems`.`entities_id` IS NOT NULL
+                           OR `glpi_knowbaseitems_profiles`.`profiles_id` IS NOT NULL
+                           OR `glpi_groups_knowbaseitems`.`groups_id` IS NOT NULL
+                           OR `glpi_knowbaseitems_users`.`users_id` IS NOT NULL)"; */
+
+     /*  // Add visibility date
+      $faq_limit .= " AND (`glpi_knowbaseitems`.`begin_date` IS NULL
+                           OR `glpi_knowbaseitems`.`begin_date` < NOW())
+                      AND (`glpi_knowbaseitems`.`end_date` IS NULL
+                           OR `glpi_knowbaseitems`.`end_date` > NOW()) "; */
+
+
+     /*  if ($faq) { // FAQ
+         $faq_limit .= " AND (`glpi_knowbaseitems`.`is_faq` = '1')";
+      } */
+
+/* 
+      if (KnowbaseItemTranslation::isKbTranslationActive()) {
+         $join .= "LEFT JOIN `glpi_knowbaseitemtranslations`
+                     ON (`glpi_knowbaseitems`.`id` = `glpi_knowbaseitemtranslations`.`knowbaseitems_id`
+                           AND `glpi_knowbaseitemtranslations`.`language` = '".$_SESSION['glpilanguage']."')";
+         $addselect .= ", `glpi_knowbaseitemtranslations`.`name` AS transname,
+                          `glpi_knowbaseitemtranslations`.`answer` AS transanswer ";
+      } */
+
+
+      /* $query = "SELECT DISTINCT `glpi_knowbaseitems`.* $addselect
+                FROM `glpi_knowbaseitems`
+                $join
+                $faq_limit
+                $orderby
+                LIMIT 10"; */
+				/* 
+				$query = "Select * from glpi_knowbaseitems_deleted";
+    
+
+
+	$result = $DB->query($query);
+      $number = $DB->numrows($result); */
+
+      //if ($number > 0) {
+     
+
+  	 
+        echo($title);
+
+		//echo "<table class='tab_cadrehov'>";
+        // echo "<tr class='noHover'><th>".$title."</th></tr>";
+        // while ($data = $DB->fetch_assoc($result)) {
+            //$name = $data['name'];
+
+           /*  if (isset($data['transname']) && !empty($data['transname'])) {
+               $name = $data['transname'];
+            } */
+            //echo "<tr class='tab_bg_2'><td class='left'>";
+           /*  echo "<a ".($data['is_faq']?" class='pubfaq' ":" class='knowbase' ")." href=\"".
+                  $CFG_GLPI["root_doc"]."/front/knowbaseitem.form.php?id=".$data["id"]."\">".
+                  Html::resume_text($name,80)."</a></td></tr>"; */
+				  //echo("<a>".Html::resume_text($name,80)."</a>");
+         //}
+        // echo "</table>";
+      //}
+   }
+   
+ 
+   
+   static function Article_deleted_view($type) {
+      global $DB, $CFG_GLPI;
+	  
+
+
+      //$faq = !Session::haveRight(self::$rightname, READ);
+
+     /*  if ($type == "recent") {
+         $orderby = "ORDER BY `date` DESC";
+         $title   = __('Recent entries');
+      } else if ($type == 'lastupdate') {
+         $orderby = "ORDER BY `date_mod` DESC";
+         $title   = __('Last updated entries');
+      } else {
+         $orderby = "ORDER BY `view` DESC";
+         $title   = __('Most popular questions');
+      } */
+	  
+	  $title   =(' Deleted  Articles Details');
+	  
+	  
+	  
+	  if ($type=="IDAC") // order by ID ASC
+		 {
+			  $orderby = "ORDER BY id  asc";
+            
+			 
+		 }
+		else if ($type=="IDDC")  // order by ID DESC
+		 {
+			  $orderby = "ORDER BY id  desc";
+            
+			 
+		 }
+		 
+		 else if ($type=="SUBASC") // order by Subject ASC
+		 {
+			  $orderby = "ORDER BY name  asc";
+             
+			 
+		 }
+		 
+		 else if ($type=="SUBDSC") // order by Subject DSC
+		 {
+			  $orderby = "ORDER BY name  desc";
+             
+			 
+		 }
+		 
+		 else if ($type=="CATASC") // order by category ASC
+		 {
+			  $orderby = "ORDER BY glpi_knowbaseitemcategories.completename  asc";
+             
+			 
+		 }
+		 
+		 else if ($type=="CATDSC") // order by category DSC
+		 {
+			  $orderby = "ORDER BY glpi_knowbaseitemcategories.completename  desc";
+             
+			 
+		 }
+		 
+		 else if ($type=="DTCNASC") // order by created on ASC
+		 {
+			  $orderby = "ORDER BY date_created  asc";
+            
+			 
+		 }
+		 
+		 else if ($type=="DTCNDSC") // order by created on DSC
+		 {
+			  $orderby = "ORDER BY date_created  desc";
+             
+			 
+		 }
+		 
+		 else if ($type=="CBASC") // order by created by ASC
+		 {
+			  $orderby = "ORDER BY concat(glpi_users_2.realname,' ',glpi_users_2.firstname)  asc";
+             
+			 
+		 }
+		 
+		 else if ($type=="CBDSC") // order by created by DSC
+		 {
+			  $orderby = "ORDER BY concat(glpi_users_2.realname,' ',glpi_users_2.firstname)  desc";
+            
+			 
+		 }
+
+		 
+		 else if ($type=="LUDASC") // order by last update  on ASC
+		 {
+			  $orderby = "ORDER BY date_mod   asc";
+             
+			 
+		 }
+		 
+		 else if ($type=="LUDDSC") // order by last update  by  DSC
+		 {
+			  $orderby = "ORDER BY date_mod  desc";
+             
+			 
+		 }
+		  else if ($type=="LUUASC") // order by last update  on ASC
+		 {
+			  $orderby = "ORDER BY concat(glpi_users_1.realname,' ', glpi_users_1.firstname)   asc";
+             
+			 
+		 }
+		 
+		 else if ($type=="LUUDSC") // order by last update  by  DSC
+		 {
+			  $orderby = "ORDER BY concat(glpi_users_1.realname,' ', glpi_users_1.firstname)  desc";
+            
+		 }
+		 
+		 
+		  else if ($type=="CONASC") // order by last update  by  DSC
+		 {
+			  $orderby = "ORDER BY answer  ASC";
+            
+		 }
+		 
+		  else if ($type=="CONDSC") // order by last update  by  DSC
+		 {
+			  $orderby = "ORDER BY answer  desc";
+            
+		 }
+		 
+		  else if ($type=="DELBYASC") // order by last update  by  DSC
+		 {
+			  $orderby = "ORDER BY concat(glpi_users.realname,' ',glpi_users.firstname)  ASC";
+            
+		 }
+		 
+		  else if ($type=="DELBYDSC") // order by last update  by  DSC
+		 {
+			  $orderby = "ORDER BY concat(glpi_users.realname,' ',glpi_users.firstname)  desc";
+            
+		 }
+		 
+		  else if ($type=="DELONASC") // order by last update  by  DSC
+		 {
+			  $orderby = "ORDER BY Deleted_Date  ASC";
+            
+		 }
+		 
+		  else if ($type=="DELONDSC") // order by last update  by  DSC
+		 {
+			  $orderby = "ORDER BY Deleted_Date  desc";
+            
+		 }
+	
+	
+	  else // default recent entries sort order 
+		 {
+		 $orderby = "ORDER BY zcustom_glpi_knowbaseitems_deleted.Deleted_Date DESC";
+       
+         }
+	  
+    // $title   =($_SESSION["glpiactiveprofile"]['id']);
+	
+	
+          
+    /*   $faq_limit = "";
+      $addselect = "";
+      // Force all joins for not published to verify no visibility set
+      $join = self::addVisibilityJoins(true);
+
+      if (Session::getLoginUserID()) {
+         $faq_limit .= "WHERE ".self::addVisibilityRestrict();
+      } else {
+         // Anonymous access
+         if (Session::isMultiEntitiesMode()) {
+            $faq_limit .= " WHERE (`glpi_entities_knowbaseitems`.`entities_id` = '0'
+                                   AND `glpi_entities_knowbaseitems`.`is_recursive` = '1')";
+         } else {
+            $faq_limit .= " WHERE 1";
+         }
+      } */
+
+
+      /* // Only published
+      $faq_limit .= " AND (`glpi_entities_knowbaseitems`.`entities_id` IS NOT NULL
+                           OR `glpi_knowbaseitems_profiles`.`profiles_id` IS NOT NULL
+                           OR `glpi_groups_knowbaseitems`.`groups_id` IS NOT NULL
+                           OR `glpi_knowbaseitems_users`.`users_id` IS NOT NULL)"; */
+
+     /*  // Add visibility date
+      $faq_limit .= " AND (`glpi_knowbaseitems`.`begin_date` IS NULL
+                           OR `glpi_knowbaseitems`.`begin_date` < NOW())
+                      AND (`glpi_knowbaseitems`.`end_date` IS NULL
+                           OR `glpi_knowbaseitems`.`end_date` > NOW()) "; */
+
+
+     /*  if ($faq) { // FAQ
+         $faq_limit .= " AND (`glpi_knowbaseitems`.`is_faq` = '1')";
+      } */
+
+/* 
+      if (KnowbaseItemTranslation::isKbTranslationActive()) {
+         $join .= "LEFT JOIN `glpi_knowbaseitemtranslations`
+                     ON (`glpi_knowbaseitems`.`id` = `glpi_knowbaseitemtranslations`.`knowbaseitems_id`
+                           AND `glpi_knowbaseitemtranslations`.`language` = '".$_SESSION['glpilanguage']."')";
+         $addselect .= ", `glpi_knowbaseitemtranslations`.`name` AS transname,
+                          `glpi_knowbaseitemtranslations`.`answer` AS transanswer ";
+      } */
+
+
+      /* $query = "SELECT DISTINCT `glpi_knowbaseitems`.* $addselect
+                FROM `glpi_knowbaseitems`
+                $join
+                $faq_limit
+                $orderby
+                LIMIT 10"; */
+				
+				$query = "
+SELECT zcustom_glpi_knowbaseitems_deleted.id,
+       zcustom_glpi_knowbaseitems_deleted.knowbaseitemcategories_id,
+       zcustom_glpi_knowbaseitems_deleted.name,
+       zcustom_glpi_knowbaseitems_deleted.answer,
+       zcustom_glpi_knowbaseitems_deleted.is_faq,
+       zcustom_glpi_knowbaseitems_deleted.view,
+       zcustom_glpi_knowbaseitems_deleted.`date`,
+       zcustom_glpi_knowbaseitems_deleted.date_mod,
+       zcustom_glpi_knowbaseitems_deleted.begin_date,
+       zcustom_glpi_knowbaseitems_deleted.end_date,
+       zcustom_glpi_knowbaseitems_deleted.Deleted_Date,
+       zcustom_glpi_knowbaseitems_deleted.users_id,
+       zcustom_glpi_knowbaseitems_deleted.Deleted_user_ID,
+       concat(glpi_users.realname,' ',glpi_users.firstname) AS DeletedUser,
+       concat(glpi_users_1.realname,' ', glpi_users_1.firstname)AS Owner,
+       zcustom_glpi_knowbaseitems_creationlog.User_id,
+       zcustom_glpi_knowbaseitems_creationlog.Knowbaseitem_ID,
+       concat(glpi_users_2.realname,' ',glpi_users_2.firstname) AS CreatedBy, glpi_knowbaseitemcategories.completename,Date as CreatedOn,zcustom_glpi_knowbaseitems_deleted.date_mod as LASTUPDATEON  
+  FROM (((zcustom_glpi_knowbaseitems_deleted zcustom_glpi_knowbaseitems_deleted
+         
+          
+          
+          left JOIN glpi_users glpi_users_1
+             ON (zcustom_glpi_knowbaseitems_deleted.users_id =
+                    glpi_users_1.id))
+        
+         left JOIN glpi_users glpi_users
+            ON (zcustom_glpi_knowbaseitems_deleted.Deleted_user_ID =
+                   glpi_users.id))
+
+       left JOIN
+        zcustom_glpi_knowbaseitems_creationlog zcustom_glpi_knowbaseitems_creationlog
+           ON (zcustom_glpi_knowbaseitems_creationlog.Knowbaseitem_ID =
+                  zcustom_glpi_knowbaseitems_deleted.id))
+
+       left JOIN glpi_users glpi_users_2
+          ON (zcustom_glpi_knowbaseitems_creationlog.User_id =
+                 glpi_users_2.id)
+           
+           left JOIN glpi_knowbaseitemcategories glpi_knowbaseitemcategories
+          ON (zcustom_glpi_knowbaseitems_deleted.knowbaseitemcategories_id =
+                 glpi_knowbaseitemcategories.id)        
+                 
+ $orderby
+
+";
+    
+
+
+	$result = $DB->query($query);
+      $number = $DB->numrows($result); 
+
+      if ($number > 0) {
+     
+
+  	 
+      //  echo($query);
+		
+		//KnowbaseItemTranslation::getTranslatedValue($this, 'answer')
+
+		echo "<table class='tab_cadrehov'>";
+		
+        // echo "<tr ><th>Article ID</th><th>Subject</th> <th>Content</th> <th>Category</th> <th>CreatedOn</th><th>Created By</th><th>Last Update ON</th><th>Last Update by</th><th>Deleted by</th> <th>Deleted on</th> </tr>";
+         echo "<tr class='tab_bg_2'><th> ID <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=IDAC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=IDDC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a> </th><th class='left'> Subject <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=SUBASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=SUBDSC' ><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th> <th class='left'> Content <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=CONASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=CONDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Category <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=CATASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=CATDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Created on <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=DTCNASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=DTCNDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Created by <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=CBASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=CBDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Last Update on <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=LUDASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=LUDDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Last Update by <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=LUUASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=LUUDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Deleted by <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=DELBYASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=DELBYDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Deleted on <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=DELONASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?DelSortorder=DELONDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th>";        
+
+
+		while ($data = $DB->fetch_assoc($result)) {
+            $name = $data['name'];
+          //  $Content=$data['answer'];
+		  
+		  
+		 $Content= $data['answer'];
+			$deleted_user=$data['UserName'];
+			$deleted_date=$data['Deleted_Date'];
+            if (isset($data['transname']) && !empty($data['transname'])) {
+               $name = $data['transname'];
+            }
+            echo "<tr class='tab_bg_2'> <td>".$data['id']."</td><td class='left'>";
+           /*  echo "<a ".($data['is_faq']?" class='pubfaq' ":" class='knowbase' ")." href=\"".
+                  $CFG_GLPI["root_doc"]."/front/knowbaseitem.form.php?id=".$data["id"]."\">".
+                  Html::resume_text($name,80)."</a></td></tr>"; */
+				  echo("<b>".Html::resume_text($name,80)."</b>");
+         
+		   echo("</td>");
+		   
+		   
+		   
+		    echo("<td class='left'>");
+		    //echo($Content);
+			echo(Toolbox::unclean_html_cross_side_scripting_deep($Content));
+		   echo("</td>");
+		   
+		    echo("<td class='left'>");
+		    echo("".Html::resume_text($data['completename'],80)."");
+		   echo("</td>");
+		   
+		   echo("<td class='left'>");
+		    echo("".Html::resume_text($data['CreatedOn'],80)."");
+		   echo("</td>");
+		   
+		   
+		    echo("<td class='left'>");
+		    echo("".Html::resume_text($data['CreatedBy'],80)."");
+		   echo("</td>");
+		   
+		  echo("<td class='left'>");
+		    echo("".Html::resume_text($data['LASTUPDATEON'],80)."");
+		   echo("</td>");
+		   
+		   
+		   echo("<td class='left'>");
+		    echo("".Html::resume_text($data['Owner'],80)."");
+		   echo("</td>");
+		   
+		   echo("<td class='left'>");
+		    echo("".Html::resume_text($data['DeletedUser'],80)."");
+		   echo("</td>");
+		   
+		   
+		    echo("<td class='left'>");
+		    echo("".Html::resume_text($deleted_date,80)."");
+		   echo("</td>");
+		 
+		 
+		 
+		 }
+         echo "</table>";
       }
+   }
+
+   
+   
+   static function KBGET_created_user($type) {
+      global $DB, $CFG_GLPI;
+
+      //$faq = !Session::haveRight(self::$rightname, READ);
+
+     /*  if ($type == "recent") {
+         $orderby = "ORDER BY `date` DESC";
+         $title   = __('Recent entries');
+      } else if ($type == 'lastupdate') {
+         $orderby = "ORDER BY `date_mod` DESC";
+         $title   = __('Last updated entries');
+      } else {
+         $orderby = "ORDER BY `view` DESC";
+         $title   = __('Most popular questions');
+      } */
+	  
+	  $title   =(' Deleted  Articles Details');
+	//  $ID      = KnowbaseID();
+	  //$this->KnowbaseID();
+	 // echo($_SESSION['Knowbaseid']);
+	  
+     //$title   =.($_SESSION["glpiactiveprofile"]['id']);
+	
+	
+          
+    /*   $faq_limit = "";
+      $addselect = "";
+      // Force all joins for not published to verify no visibility set
+      $join = self::addVisibilityJoins(true);
+
+      if (Session::getLoginUserID()) {
+         $faq_limit .= "WHERE ".self::addVisibilityRestrict();
+      } else {
+         // Anonymous access
+         if (Session::isMultiEntitiesMode()) {
+            $faq_limit .= " WHERE (`glpi_entities_knowbaseitems`.`entities_id` = '0'
+                                   AND `glpi_entities_knowbaseitems`.`is_recursive` = '1')";
+         } else {
+            $faq_limit .= " WHERE 1";
+         }
+      } */
+
+
+      /* // Only published
+      $faq_limit .= " AND (`glpi_entities_knowbaseitems`.`entities_id` IS NOT NULL
+                           OR `glpi_knowbaseitems_profiles`.`profiles_id` IS NOT NULL
+                           OR `glpi_groups_knowbaseitems`.`groups_id` IS NOT NULL
+                           OR `glpi_knowbaseitems_users`.`users_id` IS NOT NULL)"; */
+
+     /*  // Add visibility date
+      $faq_limit .= " AND (`glpi_knowbaseitems`.`begin_date` IS NULL
+                           OR `glpi_knowbaseitems`.`begin_date` < NOW())
+                      AND (`glpi_knowbaseitems`.`end_date` IS NULL
+                           OR `glpi_knowbaseitems`.`end_date` > NOW()) "; */
+
+
+     /*  if ($faq) { // FAQ
+         $faq_limit .= " AND (`glpi_knowbaseitems`.`is_faq` = '1')";
+      } */
+
+/* 
+      if (KnowbaseItemTranslation::isKbTranslationActive()) {
+         $join .= "LEFT JOIN `glpi_knowbaseitemtranslations`
+                     ON (`glpi_knowbaseitems`.`id` = `glpi_knowbaseitemtranslations`.`knowbaseitems_id`
+                           AND `glpi_knowbaseitemtranslations`.`language` = '".$_SESSION['glpilanguage']."')";
+         $addselect .= ", `glpi_knowbaseitemtranslations`.`name` AS transname,
+                          `glpi_knowbaseitemtranslations`.`answer` AS transanswer ";
+      } */
+
+
+      /* $query = "SELECT DISTINCT `glpi_knowbaseitems`.* $addselect
+                FROM `glpi_knowbaseitems`
+                $join
+                $faq_limit
+                $orderby
+                LIMIT 10"; */
+				
+			/* 	$query = "SELECT glpi_users.name
+  FROM glpidemo.glpi_knowbaseitems glpi_knowbaseitems
+       INNER JOIN glpidemo.glpi_users glpi_users
+          ON (glpi_knowbaseitems.users_id = glpi_users.id) where glpi_knowbaseitems.id =" .$_SESSION['Knowbaseid']; */
+		  
+		  
+		  
+		 	$query = "SELECT glpi_users.name
+  FROM zcustom_glpi_knowbaseitems_creationlog
+      JOIN glpi_users glpi_users
+          ON (zcustom_glpi_knowbaseitems_creationlog.User_id = glpi_users.id) where zcustom_glpi_knowbaseitems_creationlog.Knowbaseitem_ID =". $_SESSION['Knowbaseid'];
+    
+ //echo($title);
+
+	$result = $DB->query($query);
+      $number = $DB->numrows($result); 
+
+      if ($number > 0) {
+     
+
+  	 
+       
+
+		//echo "<table class='tab_cadrehov'>";
+         //echo "<tr class='noHover'><th>Subject</th> <th>Deleted by</th> <th>Deleted on</th> </tr>";
+         while ($data = $DB->fetch_assoc($result)) {
+            $name = $data['name'];
+            $deleted_user=$data['UserName'];
+			$deleted_date=$data['date_mod'];
+            if (isset($data['transname']) && !empty($data['transname'])) {
+               $name = $data['transname'];
+            }
+            //echo "<tr class='tab_bg_2'><td class='left'>";
+           /*  echo "<a ".($data['is_faq']?" class='pubfaq' ":" class='knowbase' ")." href=\"".
+                  $CFG_GLPI["root_doc"]."/front/knowbaseitem.form.php?id=".$data["id"]."\">".
+                  Html::resume_text($name,80)."</a></td></tr>"; */
+				  echo("<b> Created By ".Html::resume_text($name,80)."</b>"); 
+         
+		   //echo("</td>");  
+		   
+		   
+		   
+		 
+		 
+		 
+		 }
+         ///echo "</table>";
+		 
+      }
+   }
+   
+   
+   
+   
+   static function showRecentPopular($type) {
+      global $DB, $CFG_GLPI;
+
+      $faq = !Session::haveRight(self::$rightname, READ);
+
+      if ($type == "recent") {
+         $orderby = "ORDER BY `date`  DESC";
+         $title   = __('Recent entries');
+      } else if ($type == 'lastupdate') {
+         $orderby = "ORDER BY `date_mod` DESC";
+         $title   = __('Last updated entries');
+      } else {
+         $orderby = "ORDER BY `view` DESC";
+         $title   = __('Most popular entries');
+      }
+	  
+	  
+	  
+	  
+	  
 
       $faq_limit = "";
       $addselect = "";
@@ -1466,45 +2234,774 @@ class KnowbaseItem extends CommonDBTM {
       if ($faq) { // FAQ
          $faq_limit .= " AND (`glpi_knowbaseitems`.`is_faq` = '1')";
       }
+	  
+	  	 
+		 $join_CreatedLog = "LEFT JOIN zcustom_glpi_knowbaseitems_creationlog
+                     ON (glpi_knowbaseitems.id = zcustom_glpi_knowbaseitems_creationlog.Knowbaseitem_ID) 
+                      LEFT JOIN glpi_users as glpi_knowbaseitems_users_createlog on     
+                       (glpi_knowbaseitems_users_createlog.id =zcustom_glpi_knowbaseitems_creationlog.User_id)
+					   LEFT JOIN glpi_users as glpi_knowbaseitems_users_updatelog on     
+                       (glpi_knowbaseitems_users_updatelog.id =glpi_knowbaseitems.Users_id)
+                          LEFT JOIN glpi_knowbaseitemcategories on (glpi_knowbaseitemcategories.id=glpi_knowbaseitems.knowbaseitemcategories_id)
+						  ";
 
 
       if (KnowbaseItemTranslation::isKbTranslationActive()) {
          $join .= "LEFT JOIN `glpi_knowbaseitemtranslations`
                      ON (`glpi_knowbaseitems`.`id` = `glpi_knowbaseitemtranslations`.`knowbaseitems_id`
-                           AND `glpi_knowbaseitemtranslations`.`language` = '".$_SESSION['glpilanguage']."')";
-         $addselect .= ", `glpi_knowbaseitemtranslations`.`name` AS transname,
-                          `glpi_knowbaseitemtranslations`.`answer` AS transanswer ";
+                           AND `glpi_knowbaseitemtranslations`.`language` = '".$_SESSION['glpilanguage']."') ";
+         
+	
+		 
+		 $addselect .= ", `glpi_knowbaseitemtranslations`.`name` AS transname,
+                          `glpi_knowbaseitemtranslations`.`answer` AS transanswer  ";
       }
+	  
+	  $AddCustomized_column=",zcustom_glpi_knowbaseitems_creationlog.Date_Created,concat(glpi_knowbaseitems_users_createlog.realname , ' ',glpi_knowbaseitems_users_createlog.firstname) as createduser , concat(glpi_knowbaseitems_users_updatelog.realname,' ',glpi_knowbaseitems_users_updatelog.firstname) as LastUpdateuser,glpi_knowbaseitemcategories.completename as CategoryName";
+	  
 
 
-      $query = "SELECT DISTINCT `glpi_knowbaseitems`.* $addselect
+      $query = "SELECT DISTINCT `glpi_knowbaseitems`.* $AddCustomized_column   $addselect
                 FROM `glpi_knowbaseitems`
-                $join
+                 $join  $join_CreatedLog  
                 $faq_limit
                 $orderby
-                LIMIT 10";
+                LIMIT 30";
+				
+				 echo($query );
       $result = $DB->query($query);
       $number = $DB->numrows($result);
 
       if ($number > 0) {
-         echo "<table class='tab_cadrehov'>";
-         echo "<tr class='noHover'><th>".$title."</th></tr>";
-         while ($data = $DB->fetch_assoc($result)) {
-            $name = $data['name'];
+		  
+		 // echo($CFG_GLPI['root_doc'] );
+        
 
+    		echo "<table class='tab_cadrehov'>";
+         echo "<tr class='noHover'><th colspan=7>".$title."</th></tr>";
+        echo "<tr class='tab_bg_2'><th> ID <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?O=yu'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a> </th><th class='left'> Subject <a><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th> <th class='left'> Category <a><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Created on <a><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Created by <a><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Last Update on <a><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Last Update by <a><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th>";
+		while ($data = $DB->fetch_assoc($result)) {
+            $name = $data['name'];
+           
             if (isset($data['transname']) && !empty($data['transname'])) {
                $name = $data['transname'];
             }
-            echo "<tr class='tab_bg_2'><td class='left'>";
+            echo "<tr class='tab_bg_2'><td> " .$data["id"]. "</td><td class='left'>";
             echo "<a ".($data['is_faq']?" class='pubfaq' ":" class='knowbase' ")." href=\"".
-                  $CFG_GLPI["root_doc"]."/front/knowbaseitem.form.php?id=".$data["id"]."\">".
-                  Html::resume_text($name,80)."</a></td></tr>";
-         }
+                  $CFG_GLPI["root_doc"]."/front/knowbaseitem.form.php?id=".$data["id"]."  \">".
+                  Html::resume_text($name,80)."</a></td>";
+				  
+				  
+				 
+            echo("<td>" .$data["CategoryName"]. "</td>");
+			echo("<td>" .$data["date"]. "</td>");
+			  echo("<td>" .$data["createduser"]. "</td>");
+			  echo("<td>" .$data["date_mod"]. "</td>");
+			  echo("<td>" .$data["LastUpdateuser"]. "</td></tr>");
+         
+		    
+		 }
+		 
          echo "</table>";
       }
    }
+   
+   static function showRecent($SortType) {
+      global $DB, $CFG_GLPI;
+
+      $faq = !Session::haveRight(self::$rightname, READ);
+
+       $title   = __('Recent entries');
+         
+		 if ($SortType=="IDAC") // order by ID ASC
+		 {
+			  $orderby = "ORDER BY id  asc";
+            
+			 
+		 }
+		else if ($SortType=="IDDC")  // order by ID DESC
+		 {
+			  $orderby = "ORDER BY id  desc";
+            
+			 
+		 }
+		 
+		 else if ($SortType=="SUBASC") // order by Subject ASC
+		 {
+			  $orderby = "ORDER BY name  asc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="SUBDSC") // order by Subject DSC
+		 {
+			  $orderby = "ORDER BY name  desc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="CATASC") // order by category ASC
+		 {
+			  $orderby = "ORDER BY glpi_knowbaseitemcategories.completename  asc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="CATDSC") // order by category DSC
+		 {
+			  $orderby = "ORDER BY glpi_knowbaseitemcategories.completename  desc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="DTCNASC") // order by created on ASC
+		 {
+			  $orderby = "ORDER BY date_created  asc";
+            
+			 
+		 }
+		 
+		 else if ($SortType=="DTCNDSC") // order by created on DSC
+		 {
+			  $orderby = "ORDER BY date_created  desc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="CBASC") // order by created by ASC
+		 {
+			  $orderby = "ORDER BY concat(glpi_knowbaseitems_users_createlog.realname , ' ',glpi_knowbaseitems_users_createlog.firstname)  asc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="CBDSC") // order by created by DSC
+		 {
+			  $orderby = "ORDER BY concat(glpi_knowbaseitems_users_createlog.realname , ' ',glpi_knowbaseitems_users_createlog.firstname)  desc";
+            
+			 
+		 }
+
+		 
+		 else if ($SortType=="LUDASC") // order by last update  on ASC
+		 {
+			  $orderby = "ORDER BY date_mod   asc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="LUDDSC") // order by last update  by  DSC
+		 {
+			  $orderby = "ORDER BY date_mod  desc";
+             
+			 
+		 }
+		  else if ($SortType=="LUUASC") // order by last update  on ASC
+		 {
+			  $orderby = "ORDER BY concat(glpi_knowbaseitems_users_updatelog.realname,' ',glpi_knowbaseitems_users_updatelog.firstname)   asc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="LUUDSC") // order by last update  by  DSC
+		 {
+			  $orderby = "ORDER BY concat(glpi_knowbaseitems_users_updatelog.realname,' ',glpi_knowbaseitems_users_updatelog.firstname)  desc";
+            
+		 }
+	
+	
+	  else // default recent entries sort order 
+		 {
+		 $orderby = "ORDER BY `date`  DESC";
+       
+         }
+	  
+	  
+	  
+	  
+      $publish_root_check="";
+      $faq_limit = "";
+      $addselect = "";
+      // Force all joins for not published to verify no visibility set
+      $join = self::addVisibilityJoins(true);
+
+      if (Session::getLoginUserID()) {
+         $faq_limit .= "WHERE ".self::addVisibilityRestrict();
+      } else {
+         // Anonymous access
+         if (Session::isMultiEntitiesMode()) {
+            $faq_limit .= " WHERE (`glpi_entities_knowbaseitems`.`entities_id` = '0'
+                                   AND `glpi_entities_knowbaseitems`.`is_recursive` = '1')";
+         } else {
+            $faq_limit .= " WHERE 1";
+         }
+      }
 
 
+      // Only published
+      $faq_limit .= " AND (`glpi_entities_knowbaseitems`.`entities_id` IS NOT NULL
+                           OR `glpi_knowbaseitems_profiles`.`profiles_id` IS NOT NULL
+                           OR `glpi_groups_knowbaseitems`.`groups_id` IS NOT NULL
+                           OR `glpi_knowbaseitems_users`.`users_id` IS NOT NULL)";
+
+      // Add visibility date
+      $faq_limit .= " AND (`glpi_knowbaseitems`.`begin_date` IS NULL
+                           OR `glpi_knowbaseitems`.`begin_date` < NOW())
+                      AND (`glpi_knowbaseitems`.`end_date` IS NULL
+                           OR `glpi_knowbaseitems`.`end_date` > NOW()) ";
+
+
+      if ($faq) { // FAQ
+         $faq_limit .= " AND (`glpi_knowbaseitems`.`is_faq` = '1')";
+      }
+	  
+	  	 
+		 $join_CreatedLog = "LEFT JOIN zcustom_glpi_knowbaseitems_creationlog
+                     ON (glpi_knowbaseitems.id = zcustom_glpi_knowbaseitems_creationlog.Knowbaseitem_ID) 
+                      LEFT JOIN glpi_users as glpi_knowbaseitems_users_createlog on     
+                       (glpi_knowbaseitems_users_createlog.id =zcustom_glpi_knowbaseitems_creationlog.User_id)
+					   LEFT JOIN glpi_users as glpi_knowbaseitems_users_updatelog on     
+                       (glpi_knowbaseitems_users_updatelog.id =glpi_knowbaseitems.Users_id)
+                          LEFT JOIN glpi_knowbaseitemcategories on (glpi_knowbaseitemcategories.id=glpi_knowbaseitems.knowbaseitemcategories_id)
+						  ";
+
+
+      if (KnowbaseItemTranslation::isKbTranslationActive()) {
+         $join .= "LEFT JOIN `glpi_knowbaseitemtranslations`
+                     ON (`glpi_knowbaseitems`.`id` = `glpi_knowbaseitemtranslations`.`knowbaseitems_id`
+                           AND `glpi_knowbaseitemtranslations`.`language` = '".$_SESSION['glpilanguage']."') ";
+         
+	
+		 
+		 $addselect .= ", `glpi_knowbaseitemtranslations`.`name` AS transname,
+                          `glpi_knowbaseitemtranslations`.`answer` AS transanswer  ";
+      }
+	  
+	  $AddCustomized_column=",zcustom_glpi_knowbaseitems_creationlog.Date_Created,concat(glpi_knowbaseitems_users_createlog.realname , ' ',glpi_knowbaseitems_users_createlog.firstname) as createduser , concat(glpi_knowbaseitems_users_updatelog.realname,' ',glpi_knowbaseitems_users_updatelog.firstname) as LastUpdateuser,glpi_knowbaseitemcategories.completename as CategoryName";
+	  $publish_root_check="and glpi_knowbaseitems.id in  (select knowbaseitems_id from glpi_entities_knowbaseitems where entities_id =0)";
+
+
+      $query = "SELECT DISTINCT `glpi_knowbaseitems`.* $AddCustomized_column   $addselect
+                FROM `glpi_knowbaseitems`
+                 $join  $join_CreatedLog  
+                $faq_limit $publish_root_check
+                $orderby
+                LIMIT 30";
+				
+				// echo($query );
+      $result = $DB->query($query);
+      $number = $DB->numrows($result);
+
+      if ($number > 0) {
+		  
+		 // echo($_GET["Sortorder"] );
+        
+
+    		echo "<table class='tab_cadrehov'>";
+         echo "<tr class='noHover'><th colspan=7>".$title."</th></tr>";
+        echo "<tr class='tab_bg_2'><th> ID <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?RSortorder=IDAC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?RSortorder=IDDC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a> </th><th class='left'> Subject <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?RSortorder=SUBASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?RSortorder=SUBDSC' ><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th> <th class='left'> Category <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?RSortorder=CATASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?RSortorder=CATDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Created on <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?RSortorder=DTCNASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?RSortorder=DTCNDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Created by <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?RSortorder=CBASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?RSortorder=CBDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Last Update on <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?RSortorder=LUDASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?RSortorder=LUDDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Last Update by <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?RSortorder=LUUASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?RSortorder=LUUDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th>";
+		while ($data = $DB->fetch_assoc($result)) {
+            $name = $data['name'];
+           
+            if (isset($data['transname']) && !empty($data['transname'])) {
+               $name = $data['transname'];
+            }
+            echo "<tr class='tab_bg_2'><td> " .$data["id"]. "</td><td class='left'>";
+          /*     echo "<a ".($data['is_faq']?" class='pubfaq'  ":" class='knowbase' ")."  href=\"".
+                  $CFG_GLPI["root_doc"]."/front/knowbaseitem.form.php?id=".$data["id"]."  \">".
+                  Html::resume_text($name,80)."</a></td>"; */
+			
+			// Tooltip not working akk
+			
+			
+			//Toolbox::unclean_html_cross_side_scripting_deep($Content)
+			echo "<a ".($data['is_faq']?" class='pubfaq'  ":" class='knowbase' ")." data-toggle='tooltip' title='".Toolbox::unclean_html_cross_side_scripting_deep(Html::resume_text(Toolbox::unclean_html_cross_side_scripting_deep($data['answer']),10))."' href=\"".
+                  $CFG_GLPI["root_doc"]."/front/knowbaseitem.form.php?id=".$data["id"]."  \">".
+                  Html::resume_text($name,80)."</a></td>";
+				  
+			
+				 
+            echo("<td>" .$data["CategoryName"]. "</td>");
+			echo("<td>" .$data["date"]. "</td>");
+			  echo("<td>" .$data["createduser"]. "</td>");
+			  echo("<td>" .$data["date_mod"]. "</td>");
+			  echo("<td>" .$data["LastUpdateuser"]. "</td></tr>");
+         
+		    
+		 }
+		 
+         echo "</table>";
+      }
+   }
+   
+
+static function showlastupdate($SortType) {
+      global $DB, $CFG_GLPI;
+
+      $faq = !Session::haveRight(self::$rightname, READ);
+
+     
+         $title   = __('Last updated entries');
+     
+      
+         if ($SortType=="IDAC") // order by ID ASC
+		 {
+			  $orderby = "ORDER BY id  asc";
+            
+			 
+		 }
+		else if ($SortType=="IDDC")  // order by ID DESC
+		 {
+			  $orderby = "ORDER BY id  desc";
+            
+			 
+		 }
+		 
+		 else if ($SortType=="SUBASC") // order by Subject ASC
+		 {
+			  $orderby = "ORDER BY name  asc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="SUBDSC") // order by Subject DSC
+		 {
+			  $orderby = "ORDER BY name  desc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="CATASC") // order by category ASC
+		 {
+			  $orderby = "ORDER BY glpi_knowbaseitemcategories.completename  asc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="CATDSC") // order by category DSC
+		 {
+			  $orderby = "ORDER BY glpi_knowbaseitemcategories.completename  desc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="DTCNASC") // order by created on ASC
+		 {
+			  $orderby = "ORDER BY date_created  asc";
+            
+			 
+		 }
+		 
+		 else if ($SortType=="DTCNDSC") // order by created on DSC
+		 {
+			  $orderby = "ORDER BY date_created  desc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="CBASC") // order by created by ASC
+		 {
+			  $orderby = "ORDER BY concat(glpi_knowbaseitems_users_createlog.realname , ' ',glpi_knowbaseitems_users_createlog.firstname)  asc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="CBDSC") // order by created by DSC
+		 {
+			  $orderby = "ORDER BY concat(glpi_knowbaseitems_users_createlog.realname , ' ',glpi_knowbaseitems_users_createlog.firstname)  desc";
+            
+			 
+		 }
+
+		 
+		 else if ($SortType=="LUDASC") // order by last update  on ASC
+		 {
+			  $orderby = "ORDER BY date_mod   asc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="LUDDSC") // order by last update  by  DSC
+		 {
+			  $orderby = "ORDER BY date_mod  desc";
+             
+			 
+		 }
+		  else if ($SortType=="LUUASC") // order by last update  on ASC
+		 {
+			  $orderby = "ORDER BY concat(glpi_knowbaseitems_users_updatelog.realname,' ',glpi_knowbaseitems_users_updatelog.firstname)   asc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="LUUDSC") // order by last update  by  DSC
+		 {
+			  $orderby = "ORDER BY concat(glpi_knowbaseitems_users_updatelog.realname,' ',glpi_knowbaseitems_users_updatelog.firstname)  desc";
+            
+		 }
+	
+	
+	  else // default last entries sort order 
+		 {
+		 $orderby = "ORDER BY `date_mod` DESC";
+       
+         }
+		 
+		 
+		
+	  
+	  
+	  
+	  
+	  $publish_root_check="";
+
+      $faq_limit = "";
+      $addselect = "";
+      // Force all joins for not published to verify no visibility set
+      $join = self::addVisibilityJoins(true);
+
+      if (Session::getLoginUserID()) {
+         $faq_limit .= "WHERE ".self::addVisibilityRestrict();
+      } else {
+         // Anonymous access
+         if (Session::isMultiEntitiesMode()) {
+            $faq_limit .= " WHERE (`glpi_entities_knowbaseitems`.`entities_id` = '0'
+                                   AND `glpi_entities_knowbaseitems`.`is_recursive` = '1')";
+         } else {
+            $faq_limit .= " WHERE 1";
+         }
+      }
+
+	  
+	  $publish_root_check="and glpi_knowbaseitems.id in  (select knowbaseitems_id from glpi_entities_knowbaseitems where entities_id =0)";
+
+      // Only published
+      $faq_limit .= " AND (`glpi_entities_knowbaseitems`.`entities_id` IS NOT NULL
+                           OR `glpi_knowbaseitems_profiles`.`profiles_id` IS NOT NULL
+                           OR `glpi_groups_knowbaseitems`.`groups_id` IS NOT NULL
+                           OR `glpi_knowbaseitems_users`.`users_id` IS NOT NULL)";
+
+      // Add visibility date
+      $faq_limit .= " AND (`glpi_knowbaseitems`.`begin_date` IS NULL
+                           OR `glpi_knowbaseitems`.`begin_date` < NOW())
+                      AND (`glpi_knowbaseitems`.`end_date` IS NULL
+                           OR `glpi_knowbaseitems`.`end_date` > NOW()) ";
+
+
+      if ($faq) { // FAQ
+         $faq_limit .= " AND (`glpi_knowbaseitems`.`is_faq` = '1')";
+      }
+	  
+	  	 
+		 $join_CreatedLog = "LEFT JOIN zcustom_glpi_knowbaseitems_creationlog
+                     ON (glpi_knowbaseitems.id = zcustom_glpi_knowbaseitems_creationlog.Knowbaseitem_ID) 
+                      LEFT JOIN glpi_users as glpi_knowbaseitems_users_createlog on     
+                       (glpi_knowbaseitems_users_createlog.id =zcustom_glpi_knowbaseitems_creationlog.User_id)
+					   LEFT JOIN glpi_users as glpi_knowbaseitems_users_updatelog on     
+                       (glpi_knowbaseitems_users_updatelog.id =glpi_knowbaseitems.Users_id)
+                          LEFT JOIN glpi_knowbaseitemcategories on (glpi_knowbaseitemcategories.id=glpi_knowbaseitems.knowbaseitemcategories_id)
+						  ";
+
+
+      if (KnowbaseItemTranslation::isKbTranslationActive()) {
+         $join .= "LEFT JOIN `glpi_knowbaseitemtranslations`
+                     ON (`glpi_knowbaseitems`.`id` = `glpi_knowbaseitemtranslations`.`knowbaseitems_id`
+                           AND `glpi_knowbaseitemtranslations`.`language` = '".$_SESSION['glpilanguage']."') ";
+         
+	
+		 
+		 $addselect .= ", `glpi_knowbaseitemtranslations`.`name` AS transname,
+                          `glpi_knowbaseitemtranslations`.`answer` AS transanswer  ";
+      }
+	  
+	  $AddCustomized_column=",zcustom_glpi_knowbaseitems_creationlog.Date_Created,concat(glpi_knowbaseitems_users_createlog.realname , ' ',glpi_knowbaseitems_users_createlog.firstname) as createduser , concat(glpi_knowbaseitems_users_updatelog.realname,' ',glpi_knowbaseitems_users_updatelog.firstname) as LastUpdateuser,glpi_knowbaseitemcategories.completename as CategoryName";
+	  
+
+
+      $query = "SELECT DISTINCT `glpi_knowbaseitems`.* $AddCustomized_column   $addselect
+                FROM `glpi_knowbaseitems`
+                 $join  $join_CreatedLog  
+                $faq_limit $publish_root_check
+                $orderby
+                LIMIT 30";
+				
+				 //echo($query );
+      $result = $DB->query($query);
+      $number = $DB->numrows($result);
+
+      if ($number > 0) {
+		  
+		 // echo($CFG_GLPI['root_doc'] );
+        
+
+    		echo "<table class='tab_cadrehov'>";
+         echo "<tr class='noHover'><th colspan=7>".$title."</th></tr>";
+        echo "<tr class='tab_bg_2'><th> ID <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?LUPSortorder=IDAC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?LUPSortorder=IDDC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a> </th><th class='left'> Subject <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?LUPSortorder=SUBASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?LUPSortorder=SUBDSC' ><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th> <th class='left'> Category <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?LUPSortorder=CATASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?LUPSortorder=CATDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Created on <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?LUPSortorder=DTCNASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?LUPSortorder=DTCNDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Created by <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?LUPSortorder=CBASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?LUPSortorder=CBDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Last Update on <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?LUPSortorder=LUDASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?LUPSortorder=LUDDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Last Update by <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?LUPSortorder=LUUASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?LUPSortorder=LUUDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th>";
+		while ($data = $DB->fetch_assoc($result)) {
+            $name = $data['name'];
+           
+            if (isset($data['transname']) && !empty($data['transname'])) {
+               $name = $data['transname'];
+            }
+            echo "<tr class='tab_bg_2'><td> " .$data["id"]. "</td><td class='left'>";
+            /*     echo "<a ".($data['is_faq']?" class='pubfaq'  ":" class='knowbase' ")."  href=\"".
+                  $CFG_GLPI["root_doc"]."/front/knowbaseitem.form.php?id=".$data["id"]."  \">".
+                  Html::resume_text($name,80)."</a></td>"; */
+			
+			// Tooltip not working akk
+			
+			
+			//Toolbox::unclean_html_cross_side_scripting_deep($Content)
+			echo "<a ".($data['is_faq']?" class='pubfaq'  ":" class='knowbase' ")." data-toggle='tooltip' title='".Toolbox::unclean_html_cross_side_scripting_deep(Html::resume_text(Toolbox::unclean_html_cross_side_scripting_deep($data['answer']),10))."' href=\"".
+                  $CFG_GLPI["root_doc"]."/front/knowbaseitem.form.php?id=".$data["id"]."  \">".
+                  Html::resume_text($name,80)."</a></td>";
+				  
+				  
+				 
+            echo("<td>" .$data["CategoryName"]. "</td>");
+			echo("<td>" .$data["date"]. "</td>");
+			  echo("<td>" .$data["createduser"]. "</td>");
+			  echo("<td>" .$data["date_mod"]. "</td>");
+			  echo("<td>" .$data["LastUpdateuser"]. "</td></tr>");
+         
+		    
+		 }
+		 
+         echo "</table>";
+      }
+   }
+   
+   static function showPopular($SortType) {
+      global $DB, $CFG_GLPI;
+
+      $faq = !Session::haveRight(self::$rightname, READ);
+
+      
+         $title   = __('Most popular entries');
+     
+	   if ($SortType=="IDAC") // order by ID ASC
+		 {
+			  $orderby = "ORDER BY id  asc";
+            
+			 
+		 }
+		else if ($SortType=="IDDC")  // order by ID DESC
+		 {
+			  $orderby = "ORDER BY id  desc";
+            
+			 
+		 }
+		 
+		 else if ($SortType=="SUBASC") // order by Subject ASC
+		 {
+			  $orderby = "ORDER BY name  asc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="SUBDSC") // order by Subject DSC
+		 {
+			  $orderby = "ORDER BY name  desc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="CATASC") // order by category ASC
+		 {
+			  $orderby = "ORDER BY glpi_knowbaseitemcategories.completename  asc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="CATDSC") // order by category DSC
+		 {
+			  $orderby = "ORDER BY glpi_knowbaseitemcategories.completename  desc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="DTCNASC") // order by created on ASC
+		 {
+			  $orderby = "ORDER BY date_created  asc";
+            
+			 
+		 }
+		 
+		 else if ($SortType=="DTCNDSC") // order by created on DSC
+		 {
+			  $orderby = "ORDER BY date_created  desc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="CBASC") // order by created by ASC
+		 {
+			  $orderby = "ORDER BY concat(glpi_knowbaseitems_users_createlog.realname , ' ',glpi_knowbaseitems_users_createlog.firstname)  asc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="CBDSC") // order by created by DSC
+		 {
+			  $orderby = "ORDER BY concat(glpi_knowbaseitems_users_createlog.realname , ' ',glpi_knowbaseitems_users_createlog.firstname)  desc";
+            
+			 
+		 }
+
+		 
+		 else if ($SortType=="LUDASC") // order by last update  on ASC
+		 {
+			  $orderby = "ORDER BY date_mod   asc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="LUDDSC") // order by last update  by  DSC
+		 {
+			  $orderby = "ORDER BY date_mod  desc";
+             
+			 
+		 }
+		  else if ($SortType=="LUUASC") // order by last update  on ASC
+		 {
+			  $orderby = "ORDER BY concat(glpi_knowbaseitems_users_updatelog.realname,' ',glpi_knowbaseitems_users_updatelog.firstname)   asc";
+             
+			 
+		 }
+		 
+		 else if ($SortType=="LUUDSC") // order by last update  by  DSC
+		 {
+			  $orderby = "ORDER BY concat(glpi_knowbaseitems_users_updatelog.realname,' ',glpi_knowbaseitems_users_updatelog.firstname)  desc";
+            
+		 }
+	
+	
+	  else // default lastupdate
+		 {
+		 
+         $orderby = "ORDER BY `view` DESC";
+       
+         }
+	  
+	  
+	  
+	  
+	  
+$publish_root_check="";
+      $faq_limit = "";
+      $addselect = "";
+      // Force all joins for not published to verify no visibility set
+      $join = self::addVisibilityJoins(true);
+
+      if (Session::getLoginUserID()) {
+         $faq_limit .= "WHERE ".self::addVisibilityRestrict();
+      } else {
+         // Anonymous access
+         if (Session::isMultiEntitiesMode()) {
+            $faq_limit .= " WHERE (`glpi_entities_knowbaseitems`.`entities_id` = '0'
+                                   AND `glpi_entities_knowbaseitems`.`is_recursive` = '1')";
+         } else {
+            $faq_limit .= " WHERE 1";
+         }
+      }
+
+
+$publish_root_check="and glpi_knowbaseitems.id in  (select knowbaseitems_id from glpi_entities_knowbaseitems where entities_id =0)";     
+
+	 // Only published
+      $faq_limit .= " AND (`glpi_entities_knowbaseitems`.`entities_id` IS NOT NULL
+                           OR `glpi_knowbaseitems_profiles`.`profiles_id` IS NOT NULL
+                           OR `glpi_groups_knowbaseitems`.`groups_id` IS NOT NULL
+                           OR `glpi_knowbaseitems_users`.`users_id` IS NOT NULL)";
+
+      // Add visibility date
+      $faq_limit .= " AND (`glpi_knowbaseitems`.`begin_date` IS NULL
+                           OR `glpi_knowbaseitems`.`begin_date` < NOW())
+                      AND (`glpi_knowbaseitems`.`end_date` IS NULL
+                           OR `glpi_knowbaseitems`.`end_date` > NOW()) ";
+
+
+      if ($faq) { // FAQ
+         $faq_limit .= " AND (`glpi_knowbaseitems`.`is_faq` = '1')";
+      }
+	  
+	  	 
+		 $join_CreatedLog = "LEFT JOIN zcustom_glpi_knowbaseitems_creationlog
+                     ON (glpi_knowbaseitems.id = zcustom_glpi_knowbaseitems_creationlog.Knowbaseitem_ID) 
+                      LEFT JOIN glpi_users as glpi_knowbaseitems_users_createlog on     
+                       (glpi_knowbaseitems_users_createlog.id =zcustom_glpi_knowbaseitems_creationlog.User_id)
+					   LEFT JOIN glpi_users as glpi_knowbaseitems_users_updatelog on     
+                       (glpi_knowbaseitems_users_updatelog.id =glpi_knowbaseitems.Users_id)
+                          LEFT JOIN glpi_knowbaseitemcategories on (glpi_knowbaseitemcategories.id=glpi_knowbaseitems.knowbaseitemcategories_id)
+						  ";
+
+
+      if (KnowbaseItemTranslation::isKbTranslationActive()) {
+         $join .= "LEFT JOIN `glpi_knowbaseitemtranslations`
+                     ON (`glpi_knowbaseitems`.`id` = `glpi_knowbaseitemtranslations`.`knowbaseitems_id`
+                           AND `glpi_knowbaseitemtranslations`.`language` = '".$_SESSION['glpilanguage']."') ";
+         
+	
+		 
+		 $addselect .= ", `glpi_knowbaseitemtranslations`.`name` AS transname,
+                          `glpi_knowbaseitemtranslations`.`answer` AS transanswer  ";
+      }
+	  
+	  $AddCustomized_column=",zcustom_glpi_knowbaseitems_creationlog.Date_Created,concat(glpi_knowbaseitems_users_createlog.realname , ' ',glpi_knowbaseitems_users_createlog.firstname) as createduser , concat(glpi_knowbaseitems_users_updatelog.realname,' ',glpi_knowbaseitems_users_updatelog.firstname) as LastUpdateuser,glpi_knowbaseitemcategories.completename as CategoryName";
+	  
+
+
+      $query = "SELECT DISTINCT `glpi_knowbaseitems`.* $AddCustomized_column   $addselect
+                FROM `glpi_knowbaseitems`
+                 $join  $join_CreatedLog  
+                $faq_limit $publish_root_check
+                $orderby
+                LIMIT 30";
+				
+				 //echo($query );
+      $result = $DB->query($query);
+      $number = $DB->numrows($result);
+
+      if ($number > 0) {
+		  
+		 // echo($query  );
+        
+
+    		echo "<table class='tab_cadrehov'>";
+         echo "<tr class='noHover'><th colspan=7>".$title."</th></tr>";
+        echo "<tr class='tab_bg_2'><th> ID <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?POPSortorder=IDAC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?POPSortorder=IDDC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a> </th><th class='left'> Subject <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?POPSortorder=SUBASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?POPSortorder=SUBDSC' ><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th> <th class='left'> Category <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?POPSortorder=CATASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?POPSortorder=CATDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Created on <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?POPSortorder=DTCNASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?POPSortorder=DTCNDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Created by <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?POPSortorder=CBASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?POPSortorder=CBDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Last Update on <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?POPSortorder=LUDASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?POPSortorder=LUDDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th><th class='left'> Last Update by <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?POPSortorder=LUUASC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-up.png'></a> <a href ='".$CFG_GLPI['root_doc']."/front/knowbaseitem.php?POPSortorder=LUUDSC'><img src='".$CFG_GLPI['root_doc']."/pics/puce-down.png'></a></th>";
+		while ($data = $DB->fetch_assoc($result)) {
+            $name = $data['name'];
+           
+            if (isset($data['transname']) && !empty($data['transname'])) {
+               $name = $data['transname'];
+            }
+            echo "<tr class='tab_bg_2'><td> " .$data["id"]. "</td><td class='left'>";
+            /*     echo "<a ".($data['is_faq']?" class='pubfaq'  ":" class='knowbase' ")."  href=\"".
+                  $CFG_GLPI["root_doc"]."/front/knowbaseitem.form.php?id=".$data["id"]."  \">".
+                  Html::resume_text($name,80)."</a></td>"; */
+			
+			// Tooltip not working akk
+			
+			
+			//Toolbox::unclean_html_cross_side_scripting_deep($Content)
+			echo "<a ".($data['is_faq']?" class='pubfaq'  ":" class='knowbase' ")." data-toggle='tooltip' title='".Toolbox::unclean_html_cross_side_scripting_deep(Html::resume_text(Toolbox::unclean_html_cross_side_scripting_deep($data['answer']),10))."' href=\"".
+                  $CFG_GLPI["root_doc"]."/front/knowbaseitem.form.php?id=".$data["id"]."  \">".
+                  Html::resume_text($name,80)."</a></td>";
+				  
+				 
+            echo("<td>" .$data["CategoryName"]. "</td>");
+			echo("<td>" .$data["date"]. "</td>");
+			  echo("<td>" .$data["createduser"]. "</td>");
+			  echo("<td>" .$data["date_mod"]. "</td>");
+			  echo("<td>" .$data["LastUpdateuser"]. "</td></tr>");
+         
+		    
+		 }
+		 
+         echo "</table>";
+      }
+   }
 
    function getSearchOptions() {
 
@@ -1597,7 +3094,12 @@ class KnowbaseItem extends CommonDBTM {
       global $DB, $CFG_GLPI;
 
       $ID      = $this->fields['id'];
-      $canedit = $this->can($ID, UPDATE);
+	 
+	  
+	  $canedit = $this->can($ID, UPDATE); 
+    
+
+
 
       echo "<div class='center'>";
 
@@ -1614,9 +3116,23 @@ class KnowbaseItem extends CommonDBTM {
          echo "<tr class='tab_bg_1'><th colspan='4'>".__('Add a target')."</th></tr>";
          echo "<tr class='tab_bg_2'><td width='100px'>";
 
-         $types = array('Entity', 'Group', 'Profile', 'User');
-
-         $addrand = Dropdown::showItemTypes('_type', $types);
+         
+		 
+		 //akk permission for tl and supervisor to publish to root
+		 if ($_SESSION["glpiactiveprofile"]['id']==4||$_SESSION["glpiactiveprofile"]['id']==7)
+		 {
+		 $types = array('Entity', 'Group', 'Profile', 'User');
+		 }
+		 else
+		 {
+			$types = array('Profile'); 
+			 
+		 }
+		 
+		 //$types = array('Entity', 'Group', 'Profile', 'User');
+         
+		 
+		 $addrand = Dropdown::showItemTypes('_type', $types);
          $params  = array('type'  => '__VALUE__',
                           'right' => ($this->getField('is_faq') ? 'faq' : 'knowbase'));
 

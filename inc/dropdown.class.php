@@ -655,13 +655,16 @@ class Dropdown {
          return $rand;
       }
 
+	  
+	   if ($restrict_to != 1) {
+         $options[0] = __('Yes');
+      }
+	  
       if ($restrict_to != 0) {
-         $options[0] = __('No');
+         $options[1] = __('No');
       }
 
-      if ($restrict_to != 1) {
-         $options[1] = __('Yes');
-      }
+     
 
       $params['value'] = $value;
       return self::showFromArray($name, $options, $params);

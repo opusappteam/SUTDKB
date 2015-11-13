@@ -726,59 +726,21 @@ class Ticket extends CommonITILObject {
          if ($DB->numrows($result) == 1) {
           
            // if row is present just update or insert
-		  
-		   
-		    if(($_POST["status"]==4) )
-			 {
-				      $sql = "Update tbl_customfields SET PendingR_ID='$_POST[PendingReason]' where Ticket_ID=".$this->fields['id'] ; 
-		          $DB->query($sql);
-			 }
-			 else
-			 {
-				  $sql = "Update tbl_customfields SET EmailDate='".date_format($date,"Y/m/d H:i:s")."'  where Ticket_ID=".$this->fields['id'] ; 
-		          $DB->query($sql);
-				 
-			 }
-		   
-		   
+		   $sql = "Update tbl_customfields SET EmailDate='".date_format($date,"Y/m/d H:i:s")."' ,PendingR_ID='$_POST[PendingReason]' where Ticket_ID=".$this->fields['id'] ; 
+		   $DB->query($sql);
            
-		   /*  $sql = "Update tbl_customfields SET EmailDate='".date_format($date,"Y/m/d H:i:s")."' ,PendingR_ID='$_POST[PendingReason]' where Ticket_ID=".$this->fields['id'] ; 
-		   $DB->query($sql); */
-		   
-		   
-		   
          }
 		 else
 		 {
-			 if(($_POST["status"]==4) )
-			 {
-				 	$sql = "INSERT INTO tbl_customfields(Ticket_id,PendingR_ID) 
-              VALUES ('".$this->fields['id']."',  '$_POST[PendingReason]')";
-			  $DB->query($sql);
-			 }
-			 else
-			 {
-				 	$sql = "INSERT INTO tbl_customfields 
-              VALUES ('".$this->fields['id']."', '".date_format($date,"Y/m/d H:i:s")."', '0')";
-			  $DB->query($sql);
-    		
-				 
-			 }
-
-				 /* 	$sql = "INSERT INTO tbl_customfields 
+			  $sql = "INSERT INTO tbl_customfields 
               VALUES ('".$this->fields['id']."', '".date_format($date,"Y/m/d H:i:s")."', '$_POST[PendingReason]')";
 			  $DB->query($sql);
-    		 */
 			 
 		 }
       }
 				 
 				 
-	
-
-
-
-	}		 
+	 }		 
 				 
 				 
 				 
@@ -1728,8 +1690,8 @@ class Ticket extends CommonITILObject {
 		 
 		 if ($_POST["requesttypes_id"]=="2")
 		 {
-			  $sql = "INSERT INTO tbl_customfields
-              VALUES ('".$this->fields['id']."', '".date_format($date,"Y/m/d H:i:s")."', '0')";
+			  $sql = "INSERT INTO tbl_customfields 
+              VALUES ('".$this->fields['id']."', '".date_format($date,"Y/m/d H:i:s")."', '$_POST[PendingReason]')";
 			  $DB->query($sql);
 			 
 		 }
